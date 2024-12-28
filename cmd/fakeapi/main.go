@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	stdlog "log"
 	"net/http"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type cliArgs struct {
@@ -39,25 +41,38 @@ type Endpoint struct {
 
 type Endpoints []Endpoint
 
-func (e Endpoint) Requested(r *http.Request) bool {
-	return r.Method == e.InputMethod && r.URL.Path == e.InputPath
+type Request struct {
+	Path   string
+	Method string
 }
 
-func (es Endpoints) Requested(r *http.Request) (Endpoint, error) {
+func (e Endpoint) Requested(request Request) bool {
+	return request.Method == e.InputMethod && request.Path == e.InputPath
+}
+
+func (es Endpoints) Requested(request Request) (Endpoint, error) {
 	for _, endpoint := range es {
-		if endpoint.Requested(r) {
+		if endpoint.Requested(request) {
 			return endpoint, nil
 		}
 	}
 	return Endpoint{}, errors.New("endpoint not found")
 }
 
+func newRequestFromHTTPRequest(r *http.Request) Request {
+	return Request{Path: r.URL.Path, Method: r.Method}
+}
+
 func handler(w http.ResponseWriter, r *http.Request, endpoints Endpoints) {
-	activeEndpoint, err := endpoints.Requested(r)
+	request := newRequestFromHTTPRequest(r)
+	activeEndpoint, err := endpoints.Requested(request)
 	if err != nil {
+		log.Error(fmt.Sprintf("%s %s not found", request.Method, request.Path))
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+
+	log.Info(fmt.Sprintf("%s %s", request.Method, request.Path))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(activeEndpoint.OutputContent)
@@ -81,6 +96,7 @@ func newEndpointsFromFile(filePath string) ([]Endpoint, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	byteValue, err := io.ReadAll(file)
 	if err != nil {
@@ -96,15 +112,23 @@ func newEndpointsFromFile(filePath string) ([]Endpoint, error) {
 	return endpoints, nil
 }
 
+func setupLog() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
+}
+
 func main() {
+	setupLog()
+
 	cliArgs, err := newCLIArgs()
 	if err != nil {
-		log.Fatal(err)
+		stdlog.Fatal(err)
 	}
 
 	endpoints, err := newEndpointsFromFile(cliArgs.FilePath)
 	if err != nil {
-		log.Fatal(err)
+		stdlog.Fatal(err)
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
