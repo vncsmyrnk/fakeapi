@@ -1,9 +1,5 @@
+![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
+
 # Fake API
 
-Fully customizable REST API for testing.
-
-## Steps
-
-- [ ] Basic API
-- [ ] Endpoint generator
-- [ ] Setting cutomizable responses
+CLI for dummy REST API for testing other software.
