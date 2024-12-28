@@ -1,0 +1,13 @@
+[
+  {
+    "path": "/my-route",
+    "method": "POST",
+    "status": 200,
+    "content": {
+      "name": "value",
+      "other-name": {
+        "some-other-name": "another-value"
+      }
+    }
+  }
+]
