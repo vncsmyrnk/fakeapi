@@ -3,16 +3,17 @@ package route
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 )
 
+type Content map[string]any
+
 type Endpoint struct {
-	InputPath     string         `json:"path"`
-	InputMethod   string         `json:"method"`
-	OutputStatus  int            `json:"status"`
-	OutputContent map[string]any `json:"content"`
+	InputPath     string  `json:"path"`
+	InputMethod   string  `json:"method"`
+	OutputStatus  int     `json:"status"`
+	OutputContent Content `json:"content"`
 }
 
 type Endpoints []Endpoint
@@ -31,12 +32,7 @@ func (es Endpoints) Requested(request Request) (Endpoint, error) {
 }
 
 func NewEndpointsFromFile(filePath string) ([]Endpoint, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	file, err := os.Open(fmt.Sprintf("%s/%s", dir, filePath))
+	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}

@@ -11,9 +11,30 @@ import (
 	"fakeapi/pkg/route"
 )
 
-type Config struct {
+type server struct {
 	Port      int16
 	Endpoints route.Endpoints
+}
+
+func NewServer(port int16, endpoints route.Endpoints) server {
+	return server{
+		Port:      port,
+		Endpoints: endpoints,
+	}
+}
+
+func (s server) Run() {
+	setupLog()
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		handler(w, r, s.Endpoints)
+	})
+	http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
+}
+
+func setupLog() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
 }
 
 func handler(w http.ResponseWriter, r *http.Request, endpoints route.Endpoints) {
@@ -29,19 +50,4 @@ func handler(w http.ResponseWriter, r *http.Request, endpoints route.Endpoints) 
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(activeEndpoint.OutputContent)
-}
-
-func setupLog() {
-	log.SetFormatter(&log.TextFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
-}
-
-func Run(config Config) {
-	setupLog()
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handler(w, r, config.Endpoints)
-	})
-	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
-
 }
