@@ -26,7 +26,7 @@ func NewServer(port int16, endpoints route.Endpoints) server {
 func (s server) Run() {
 	setupLog()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handler(w, r, s.Endpoints)
+		serveHTTP(w, r, s.Endpoints)
 	})
 	http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
 }
@@ -37,7 +37,7 @@ func setupLog() {
 	log.SetLevel(log.InfoLevel)
 }
 
-func handler(w http.ResponseWriter, r *http.Request, endpoints route.Endpoints) {
+func serveHTTP(w http.ResponseWriter, r *http.Request, endpoints route.Endpoints) {
 	request := route.NewRequestFromHTTPRequest(r)
 	activeEndpoint, err := endpoints.Requested(request)
 	if err != nil {

@@ -58,7 +58,7 @@ func TestHandler(t *testing.T) {
 			req := httptest.NewRequest(tc.method, tc.path, nil)
 			w := httptest.NewRecorder()
 
-			handler(w, req, endpoints)
+			serveHTTP(w, req, endpoints)
 
 			assert.Equal(t, tc.expectedStatus, w.Result().StatusCode)
 
