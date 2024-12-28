@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	stdlog "log"
 	"os"
 
@@ -18,7 +19,13 @@ func newCLIArgs() (*cliArgs, error) {
 		return nil, errors.New("Inform the needed parameters")
 	}
 
-	return &cliArgs{FilePath: os.Args[1]}, nil
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	filePath := fmt.Sprintf("%s/%s", dir, os.Args[1])
+
+	return &cliArgs{FilePath: filePath}, nil
 }
 
 func main() {
@@ -32,8 +39,6 @@ func main() {
 		stdlog.Fatal(err)
 	}
 
-	server.Run(server.Config{
-		Port:      8080,
-		Endpoints: endpoints,
-	})
+	server := server.NewServer(8080, endpoints)
+	server.Run()
 }
