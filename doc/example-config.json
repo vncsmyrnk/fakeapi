@@ -2,12 +2,27 @@
   {
     "path": "/my-route",
     "method": "POST",
-    "status": 200,
+    "status": 201,
     "content": {
       "name": "value",
       "other-name": {
         "some-other-name": "another-value"
       }
     }
+  },
+  {
+    "path": "/item",
+    "method": "GET",
+    "status": 200,
+    "content": [
+      {
+        "id": 1,
+        "name": "orange"
+      },
+      {
+        "id": 2,
+        "name": "apple"
+      }
+    ]
   }
 ]

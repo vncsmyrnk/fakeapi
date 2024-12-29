@@ -72,7 +72,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 	{
 		"path": "/order",
 		"method": "POST",
-		"status": 200,
+		"status": 201,
 		"content": {
 			"price": 340,
 			"shipping": {
@@ -111,8 +111,8 @@ func TestNewEndpointsFromFile(t *testing.T) {
 				EndpointInputKey{Path: "/order", Method: http.MethodPost}: Endpoint{
 					InputPath:    "/order",
 					InputMethod:  http.MethodPost,
-					OutputStatus: http.StatusOK,
-					OutputContent: Content{
+					OutputStatus: http.StatusCreated,
+					OutputContent: map[string]any{
 						"price": float64(340),
 						"shipping": map[string]interface{}{
 							"method":       "plane",
@@ -124,7 +124,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 					InputPath:    "/payment/3",
 					InputMethod:  http.MethodDelete,
 					OutputStatus: http.StatusServiceUnavailable,
-					OutputContent: Content{
+					OutputContent: map[string]any{
 						"error": "server unavailable",
 						"trace": "...",
 					},
@@ -160,7 +160,7 @@ func generateMockEndpoints() Endpoints {
 			InputPath:    "/item/123",
 			InputMethod:  http.MethodGet,
 			OutputStatus: http.StatusOK,
-			OutputContent: Content{
+			OutputContent: map[string]any{
 				"id":   float64(123),
 				"name": "my item",
 			},
@@ -175,7 +175,7 @@ func generateMockEndpoints() Endpoints {
 			InputPath:    "/order",
 			InputMethod:  http.MethodPost,
 			OutputStatus: http.StatusCreated,
-			OutputContent: Content{
+			OutputContent: map[string]any{
 				"id": float64(15),
 			},
 		},

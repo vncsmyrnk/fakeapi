@@ -8,7 +8,7 @@ import (
 )
 
 // Content represents what an endpoint must return.
-type Content map[string]any
+type Content any
 
 // Endpoint represents a custom endpoint set by the user.
 type Endpoint struct {
