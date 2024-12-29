@@ -92,6 +92,7 @@ func TestIntegrationServer(t *testing.T) {
 	}
 
 	srv := NewServer(
+		WithPort(8181),
 		WithEndpoints(endpoints),
 	)
 
