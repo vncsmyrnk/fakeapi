@@ -12,7 +12,7 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    container: 1.24-rc-alpine
+    container: 1.23-alpine
     steps:
       - name: Checkout
         uses: actions/checkout@v4
