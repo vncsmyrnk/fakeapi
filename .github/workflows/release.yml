@@ -25,7 +25,7 @@ jobs:
       - name: Build binary
         run: |
           mkdir -p dist
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/fakeapi-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/fakeapi
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/fakeapi-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/fakeapi
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
