@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	log "github.com/sirupsen/logrus"
 
@@ -47,7 +46,6 @@ func WithEndpoints(endpoints route.Endpoints) Option {
 
 // Start spins up the Server.
 func (s Server) Start() error {
-	setupLog()
 	http.HandleFunc("/", s.serveHTTP)
 	return http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
 }
@@ -70,10 +68,4 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
-}
-
-func setupLog() {
-	log.SetFormatter(&log.TextFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
 }

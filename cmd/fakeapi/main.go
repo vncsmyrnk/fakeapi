@@ -7,6 +7,8 @@ import (
 	stdlog "log"
 	"os"
 
+	log "github.com/sirupsen/logrus"
+
 	"fakeapi/pkg/route"
 	"fakeapi/pkg/server"
 )
@@ -35,6 +37,7 @@ func newCLIArgs() (*cliArgs, error) {
 }
 
 func main() {
+	setupLog()
 	cliArgs, err := newCLIArgs()
 	if err != nil {
 		stdlog.Fatal(err)
@@ -54,4 +57,10 @@ func main() {
 	if err != nil {
 		stdlog.Fatal(err)
 	}
+}
+
+func setupLog() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
 }
