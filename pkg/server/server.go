@@ -11,24 +11,39 @@ import (
 	"fakeapi/pkg/route"
 )
 
+const defaultServerPort int16 = 8080
+
 type server struct {
 	Port      int16
 	Endpoints route.Endpoints
 }
 
-func NewServer(port int16, endpoints route.Endpoints) server {
-	return server{
-		Port:      port,
-		Endpoints: endpoints,
+type option func(*server)
+
+func NewServer(opts ...option) *server {
+	s := &server{Port: defaultServerPort}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+func WithPort(port int16) option {
+	return func(s *server) {
+		s.Port = port
 	}
 }
 
-func (s server) Run() {
+func WithEndpoints(endpoints route.Endpoints) option {
+	return func(s *server) {
+		s.Endpoints = endpoints
+	}
+}
+
+func (s server) Start() error {
 	setupLog()
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		serveHTTP(w, r, s.Endpoints)
-	})
-	http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
+	http.HandleFunc("/", s.serveHTTP)
+	return http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
 }
 
 func setupLog() {
@@ -37,9 +52,9 @@ func setupLog() {
 	log.SetLevel(log.InfoLevel)
 }
 
-func serveHTTP(w http.ResponseWriter, r *http.Request, endpoints route.Endpoints) {
+func (s server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	request := route.NewRequestFromHTTPRequest(r)
-	activeEndpoint, err := endpoints.Requested(request)
+	activeEndpoint, err := s.Endpoints.Requested(request)
 	if err != nil {
 		log.Error(fmt.Sprintf("%s %s not found", request.Method, request.Path))
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -49,5 +64,6 @@ func serveHTTP(w http.ResponseWriter, r *http.Request, endpoints route.Endpoints
 	log.Info(fmt.Sprintf("%s %s", request.Method, request.Path))
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(activeEndpoint.OutputStatus)
 	json.NewEncoder(w).Encode(activeEndpoint.OutputContent)
 }
