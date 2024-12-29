@@ -43,5 +43,9 @@ func main() {
 		server.WithPort(int16(8080)),
 		server.WithEndpoints(endpoints),
 	)
-	server.Start()
+
+	err = server.Start()
+	if err != nil {
+		stdlog.Fatal(err)
+	}
 }
