@@ -20,7 +20,7 @@ func TestHandler(t *testing.T) {
 			InputPath:    "/search",
 			InputMethod:  http.MethodGet,
 			OutputStatus: http.StatusOK,
-			OutputContent: map[string]interface{}{
+			OutputContent: map[string]any{
 				"id":   1,
 				"name": "apple",
 			},
@@ -29,7 +29,7 @@ func TestHandler(t *testing.T) {
 			InputPath:    "/item/14",
 			InputMethod:  http.MethodPatch,
 			OutputStatus: http.StatusInternalServerError,
-			OutputContent: map[string]interface{}{
+			OutputContent: map[string]any{
 				"error": "server failed",
 			},
 		},
@@ -40,14 +40,14 @@ func TestHandler(t *testing.T) {
 		method         string
 		path           string
 		expectedStatus int
-		expectedBody   map[string]interface{}
+		expectedBody   route.Content
 	}{
 		{
 			name:           "valid request",
 			method:         http.MethodGet,
 			path:           "/search",
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]interface{}{"id": float64(1), "name": "apple"},
+			expectedBody:   map[string]any{"id": float64(1), "name": "apple"},
 		},
 		{
 			name:           "path not found",
@@ -85,7 +85,7 @@ func TestIntegrationServer(t *testing.T) {
 			InputPath:    "/item",
 			InputMethod:  http.MethodPost,
 			OutputStatus: http.StatusCreated,
-			OutputContent: map[string]interface{}{
+			OutputContent: map[string]any{
 				"name": "orange",
 			},
 		},
