@@ -44,6 +44,17 @@ curl -X POST localhost:8080/my-route
 go install github.com/vncsmyrnk/fakeapi@latest
 ```
 
+### Manually
+
+Check the [releases section](https://github.com/vncsmyrnk/fakeapi/releases) for the binaries.
+
+Example:
+
+```sh
+curl -L https://github.com/vncsmyrnk/fakeapi/releases/latest/download/fakeapi-linux-amd64 -o fakeapi # Download the correct binary according to your settings
+mv fakeapi ~/.local/bin # Move it to an executable path
+```
+
 ### Via package managers
 
 Work in progress...
