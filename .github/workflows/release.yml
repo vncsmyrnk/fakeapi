@@ -61,7 +61,7 @@ jobs:
           draft: true
           prerelease: false
           files: |
-            artifacts/*
+            artifacts/fakeapi-*
           body: |
             # Changelog
 
