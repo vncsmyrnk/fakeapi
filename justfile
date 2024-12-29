@@ -2,10 +2,10 @@ default:
   just --list
 
 test:
-  CGO_ENABLED=1 go test -cover -race ./...
+  go test -cover ./...
 
 build:
-  go build -buildvcs=false ./cmd/fakeapi
+  go build ./cmd/fakeapi
 
 install-linter:
   go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest

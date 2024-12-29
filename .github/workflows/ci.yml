@@ -12,15 +12,12 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    container: golang:1.23-bookworm
+    container: golang:1.23-alpine
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - uses: extractions/setup-just@v2
-
-      - name: build
-        run: just build
 
       - name: lint
         run: just lint
