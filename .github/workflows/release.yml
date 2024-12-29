@@ -66,3 +66,5 @@ jobs:
             # Changelog
 
             ${{ steps.github_release.outputs.changelog }}
+
+            Check the release assets for the binaries. To install it, just download the correct version for your system and move it to an executable path
