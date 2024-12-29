@@ -30,7 +30,7 @@ jobs:
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: fakeapi-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/
 
   release:
@@ -43,7 +43,6 @@ jobs:
         id: download-build-artifact
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
           path: artifacts
 
       - name: List build artifacts generated
