@@ -16,22 +16,43 @@ type Endpoint struct {
 	OutputContent Content `json:"content"`
 }
 
-type Endpoints []Endpoint
-
-func (e Endpoint) Requested(request Request) bool {
-	return request.Method == e.InputMethod && request.Path == e.InputPath
+type EndpointInputKey struct {
+	Path   string
+	Method string
 }
+
+type Endpoints map[EndpointInputKey]Endpoint
 
 func (es Endpoints) Requested(request Request) (Endpoint, error) {
-	for _, endpoint := range es {
-		if endpoint.Requested(request) {
-			return endpoint, nil
-		}
+	key := newEndpointCompositeKeyFromRequest(request)
+	endpoint, exists := es[key]
+	if !exists {
+		return Endpoint{}, errors.New("endpoint not found")
 	}
-	return Endpoint{}, errors.New("endpoint not found")
+	return endpoint, nil
 }
 
-func NewEndpointsFromFile(filePath string) ([]Endpoint, error) {
+func newEndpointsFromEndpointArray(endpointsArray []Endpoint) Endpoints {
+	endpoints := make(Endpoints)
+	for _, endpoint := range endpointsArray {
+		key := newEndpointCompositeKeyFromEndpoint(endpoint)
+		endpoints[key] = endpoint
+	}
+	return endpoints
+}
+
+func newEndpointCompositeKeyFromRequest(request Request) EndpointInputKey {
+	return EndpointInputKey(request)
+}
+
+func newEndpointCompositeKeyFromEndpoint(endpoint Endpoint) EndpointInputKey {
+	return EndpointInputKey{
+		Path:   endpoint.InputPath,
+		Method: endpoint.InputMethod,
+	}
+}
+
+func NewEndpointsFromFile(filePath string) (Endpoints, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -43,11 +64,12 @@ func NewEndpointsFromFile(filePath string) ([]Endpoint, error) {
 		return nil, err
 	}
 
-	var endpoints []Endpoint
-	err = json.Unmarshal(byteValue, &endpoints)
+	var endpointsArray []Endpoint
+	err = json.Unmarshal(byteValue, &endpointsArray)
 	if err != nil {
 		return nil, err
 	}
 
+	endpoints := newEndpointsFromEndpointArray(endpointsArray)
 	return endpoints, nil
 }
