@@ -2,9 +2,12 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -74,4 +77,39 @@ func TestHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIntegrationServer(t *testing.T) {
+	endpoints := route.Endpoints{
+		route.Endpoint{
+			InputPath:    "/item",
+			InputMethod:  http.MethodPost,
+			OutputStatus: http.StatusCreated,
+			OutputContent: map[string]interface{}{
+				"name": "orange",
+			},
+		},
+	}
+
+	srv := NewServer(
+		WithEndpoints(endpoints),
+	)
+
+	go func() {
+		if err := srv.Start(); err != nil {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	time.Sleep(1 * time.Second)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:%d%s", srv.Port, "/item"), nil)
+	assert.NoError(t, err)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 }
