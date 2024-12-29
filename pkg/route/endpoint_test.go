@@ -20,7 +20,7 @@ func TestEndpointRequested(t *testing.T) {
 			endpoint: Endpoint{
 				InputPath:     "/a-path",
 				InputMethod:   http.MethodGet,
-				OutputStatus:  200,
+				OutputStatus:  http.StatusOK,
 				OutputContent: Content{"some-property": "some-value"},
 			},
 			request: Request{
@@ -34,7 +34,7 @@ func TestEndpointRequested(t *testing.T) {
 			endpoint: Endpoint{
 				InputPath:     "/other-path",
 				InputMethod:   http.MethodPost,
-				OutputStatus:  204,
+				OutputStatus:  http.StatusNoContent,
 				OutputContent: Content{"some-property": 3},
 			},
 			request: Request{
@@ -57,19 +57,19 @@ func TestEndpointsRequested(t *testing.T) {
 		{
 			InputPath:     "/checkout",
 			InputMethod:   http.MethodDelete,
-			OutputStatus:  204,
+			OutputStatus:  http.StatusNoContent,
 			OutputContent: Content{"deleted": true},
 		},
 		{
 			InputPath:     "/shelter/dog/104",
 			InputMethod:   http.MethodPatch,
-			OutputStatus:  500,
-			OutputContent: Content{"error": "server unavailble"},
+			OutputStatus:  http.StatusInternalServerError,
+			OutputContent: Content{"error": "server error"},
 		},
 		{
 			InputPath:     "/item/2",
 			InputMethod:   http.MethodGet,
-			OutputStatus:  200,
+			OutputStatus:  http.StatusOK,
 			OutputContent: Content{"id": 2, "color": "blue", "price": 100},
 		},
 	}
@@ -172,7 +172,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 				{
 					InputPath:    "/order",
 					InputMethod:  http.MethodPost,
-					OutputStatus: 200,
+					OutputStatus: http.StatusOK,
 					OutputContent: Content{
 						"price": float64(340),
 						"shipping": map[string]interface{}{
@@ -184,7 +184,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 				{
 					InputPath:    "/payment/3",
 					InputMethod:  http.MethodDelete,
-					OutputStatus: 503,
+					OutputStatus: http.StatusServiceUnavailable,
 					OutputContent: Content{
 						"error": "server unavailable",
 						"trace": "...",
