@@ -56,12 +56,12 @@ func (s server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	request := route.NewRequestFromHTTPRequest(r)
 	activeEndpoint, err := s.Endpoints.Requested(request)
 	if err != nil {
-		log.Error(fmt.Sprintf("%s %s not found", request.Method, request.Path))
+		log.Error(fmt.Sprintf("%s not found", request.String()))
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	log.Info(fmt.Sprintf("%s %s", request.Method, request.Path))
+	log.Info(request.String())
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(activeEndpoint.OutputStatus)

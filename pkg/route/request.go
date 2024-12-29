@@ -1,6 +1,9 @@
 package route
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 type Request struct {
 	Path   string
@@ -9,4 +12,8 @@ type Request struct {
 
 func NewRequestFromHTTPRequest(r *http.Request) Request {
 	return Request{Path: r.URL.Path, Method: r.Method}
+}
+
+func (r Request) String() string {
+	return fmt.Sprintf("%s %s", r.Method, r.Path)
 }
