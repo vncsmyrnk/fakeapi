@@ -14,18 +14,20 @@ import (
 func TestHandler(t *testing.T) {
 	endpoints := route.Endpoints{
 		route.Endpoint{
-			InputPath:   "/search",
-			InputMethod: http.MethodGet,
+			InputPath:    "/search",
+			InputMethod:  http.MethodGet,
+			OutputStatus: http.StatusOK,
 			OutputContent: map[string]interface{}{
 				"id":   1,
 				"name": "apple",
 			},
 		},
 		route.Endpoint{
-			InputPath:   "/item/14",
-			InputMethod: http.MethodPatch,
+			InputPath:    "/item/14",
+			InputMethod:  http.MethodPatch,
+			OutputStatus: http.StatusInternalServerError,
 			OutputContent: map[string]interface{}{
-				"name": "Updated",
+				"error": "server failed",
 			},
 		},
 	}
@@ -58,7 +60,8 @@ func TestHandler(t *testing.T) {
 			req := httptest.NewRequest(tc.method, tc.path, nil)
 			w := httptest.NewRecorder()
 
-			serveHTTP(w, req, endpoints)
+			server := NewServer(WithEndpoints(endpoints))
+			server.serveHTTP(w, req)
 
 			assert.Equal(t, tc.expectedStatus, w.Result().StatusCode)
 
