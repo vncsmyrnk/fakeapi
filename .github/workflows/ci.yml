@@ -19,6 +19,9 @@ jobs:
 
       - uses: extractions/setup-just@v2
 
+      - name: build
+        run: just build
+
       - name: lint
         run: just lint
 
