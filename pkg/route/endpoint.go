@@ -7,8 +7,10 @@ import (
 	"os"
 )
 
+// Content represents what an endpoint must return.
 type Content map[string]any
 
+// Endpoint represents a custom endpoint set by the user.
 type Endpoint struct {
 	InputPath     string  `json:"path"`
 	InputMethod   string  `json:"method"`
@@ -16,13 +18,16 @@ type Endpoint struct {
 	OutputContent Content `json:"content"`
 }
 
+// EndpointInputKey serves as an endpoint identifier
 type EndpointInputKey struct {
 	Path   string
 	Method string
 }
 
+// Endpoints represents a map of endpoints
 type Endpoints map[EndpointInputKey]Endpoint
 
+// Requested returns the endpoint matched by a request.
 func (es Endpoints) Requested(request Request) (Endpoint, error) {
 	key := newEndpointCompositeKeyFromRequest(request)
 	endpoint, exists := es[key]
@@ -32,26 +37,7 @@ func (es Endpoints) Requested(request Request) (Endpoint, error) {
 	return endpoint, nil
 }
 
-func newEndpointsFromEndpointArray(endpointsArray []Endpoint) Endpoints {
-	endpoints := make(Endpoints)
-	for _, endpoint := range endpointsArray {
-		key := newEndpointCompositeKeyFromEndpoint(endpoint)
-		endpoints[key] = endpoint
-	}
-	return endpoints
-}
-
-func newEndpointCompositeKeyFromRequest(request Request) EndpointInputKey {
-	return EndpointInputKey(request)
-}
-
-func newEndpointCompositeKeyFromEndpoint(endpoint Endpoint) EndpointInputKey {
-	return EndpointInputKey{
-		Path:   endpoint.InputPath,
-		Method: endpoint.InputMethod,
-	}
-}
-
+// NewEndpointsFromFile creates endpoints read from a file.
 func NewEndpointsFromFile(filePath string) (Endpoints, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -72,4 +58,24 @@ func NewEndpointsFromFile(filePath string) (Endpoints, error) {
 
 	endpoints := newEndpointsFromEndpointArray(endpointsArray)
 	return endpoints, nil
+}
+
+func newEndpointsFromEndpointArray(endpointsArray []Endpoint) Endpoints {
+	endpoints := make(Endpoints)
+	for _, endpoint := range endpointsArray {
+		key := newEndpointCompositeKeyFromEndpoint(endpoint)
+		endpoints[key] = endpoint
+	}
+	return endpoints
+}
+
+func newEndpointCompositeKeyFromRequest(request Request) EndpointInputKey {
+	return EndpointInputKey(request)
+}
+
+func newEndpointCompositeKeyFromEndpoint(endpoint Endpoint) EndpointInputKey {
+	return EndpointInputKey{
+		Path:   endpoint.InputPath,
+		Method: endpoint.InputMethod,
+	}
 }

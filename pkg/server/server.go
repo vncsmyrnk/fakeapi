@@ -13,46 +13,46 @@ import (
 
 const defaultServerPort int16 = 8080
 
-type server struct {
+// Server represents the components needed for a server to run
+type Server struct {
 	Port      int16
 	Endpoints route.Endpoints
 }
 
-type option func(*server)
+// Option adds the capability of creating a server with options
+type Option func(*Server)
 
-func NewServer(opts ...option) *server {
-	s := &server{Port: defaultServerPort}
+// NewServer returns a runnable Server.
+func NewServer(opts ...Option) *Server {
+	s := &Server{Port: defaultServerPort}
 	for _, opt := range opts {
 		opt(s)
 	}
 	return s
 }
 
-func WithPort(port int16) option {
-	return func(s *server) {
+// WithPort initializes the server's port
+func WithPort(port int16) Option {
+	return func(s *Server) {
 		s.Port = port
 	}
 }
 
-func WithEndpoints(endpoints route.Endpoints) option {
-	return func(s *server) {
+// WithPort initializes the server's endpoints
+func WithEndpoints(endpoints route.Endpoints) Option {
+	return func(s *Server) {
 		s.Endpoints = endpoints
 	}
 }
 
-func (s server) Start() error {
+// Start spins up the Server.
+func (s Server) Start() error {
 	setupLog()
 	http.HandleFunc("/", s.serveHTTP)
 	return http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
 }
 
-func setupLog() {
-	log.SetFormatter(&log.TextFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
-}
-
-func (s server) serveHTTP(w http.ResponseWriter, r *http.Request) {
+func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	request := route.NewRequestFromHTTPRequest(r)
 	activeEndpoint, err := s.Endpoints.Requested(request)
 	if err != nil {
@@ -70,4 +70,10 @@ func (s server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
+}
+
+func setupLog() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
 }
