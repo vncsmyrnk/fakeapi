@@ -8,71 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEndpointRequested(t *testing.T) {
-	testCases := []struct {
-		name      string
-		endpoint  Endpoint
-		request   Request
-		requested bool
-	}{
-		{
-			name: "requested",
-			endpoint: Endpoint{
-				InputPath:     "/a-path",
-				InputMethod:   http.MethodGet,
-				OutputStatus:  http.StatusOK,
-				OutputContent: Content{"some-property": "some-value"},
-			},
-			request: Request{
-				Path:   "/a-path",
-				Method: http.MethodGet,
-			},
-			requested: true,
-		},
-		{
-			name: "not requested",
-			endpoint: Endpoint{
-				InputPath:     "/other-path",
-				InputMethod:   http.MethodPost,
-				OutputStatus:  http.StatusNoContent,
-				OutputContent: Content{"some-property": 3},
-			},
-			request: Request{
-				Path:   "/a-completely-different-path",
-				Method: http.MethodPut,
-			},
-			requested: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.requested, tc.endpoint.Requested(tc.request))
-		})
-	}
-}
-
 func TestEndpointsRequested(t *testing.T) {
-	endpoints := Endpoints{
-		{
-			InputPath:     "/checkout",
-			InputMethod:   http.MethodDelete,
-			OutputStatus:  http.StatusNoContent,
-			OutputContent: Content{"deleted": true},
-		},
-		{
-			InputPath:     "/shelter/dog/104",
-			InputMethod:   http.MethodPatch,
-			OutputStatus:  http.StatusInternalServerError,
-			OutputContent: Content{"error": "server error"},
-		},
-		{
-			InputPath:     "/item/2",
-			InputMethod:   http.MethodGet,
-			OutputStatus:  http.StatusOK,
-			OutputContent: Content{"id": 2, "color": "blue", "price": 100},
-		},
-	}
+	endpoints := generateMockEndpoints()
+	foundEndpoint, exists := endpoints[EndpointInputKey{Path: "/item/123", Method: http.MethodGet}]
+	assert.True(t, exists)
 
 	testCases := []struct {
 		name      string
@@ -83,10 +22,10 @@ func TestEndpointsRequested(t *testing.T) {
 		{
 			name: "endpoint found",
 			request: Request{
-				Path:   "/item/2",
+				Path:   "/item/123",
 				Method: http.MethodGet,
 			},
-			requested: endpoints[2],
+			requested: foundEndpoint,
 			error:     false,
 		},
 		{
@@ -118,7 +57,7 @@ func TestEndpointsRequested(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tc.requested, requestedEndpoint)
-			assert.Empty(t, err)
+			assert.Nil(t, err)
 		})
 	}
 }
@@ -162,14 +101,14 @@ func TestNewEndpointsFromFile(t *testing.T) {
 	testCases := []struct {
 		name      string
 		filePath  string
-		endpoints []Endpoint
+		endpoints Endpoints
 		error     bool
 	}{
 		{
 			name:     "endpoints loaded",
 			filePath: tmpFile.Name(),
 			endpoints: Endpoints{
-				{
+				EndpointInputKey{Path: "/order", Method: http.MethodPost}: Endpoint{
 					InputPath:    "/order",
 					InputMethod:  http.MethodPost,
 					OutputStatus: http.StatusOK,
@@ -181,7 +120,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 						},
 					},
 				},
-				{
+				EndpointInputKey{Path: "/payment/3", Method: http.MethodDelete}: Endpoint{
 					InputPath:    "/payment/3",
 					InputMethod:  http.MethodDelete,
 					OutputStatus: http.StatusServiceUnavailable,
@@ -212,5 +151,33 @@ func TestNewEndpointsFromFile(t *testing.T) {
 			assert.Equal(t, tc.endpoints, endpoints)
 			assert.Nil(t, err)
 		})
+	}
+}
+
+func generateMockEndpoints() Endpoints {
+	return Endpoints{
+		EndpointInputKey{Path: "/item/123", Method: http.MethodGet}: Endpoint{
+			InputPath:    "/item/123",
+			InputMethod:  http.MethodGet,
+			OutputStatus: http.StatusOK,
+			OutputContent: Content{
+				"id":   float64(123),
+				"name": "my item",
+			},
+		},
+		EndpointInputKey{Path: "/order/2", Method: http.MethodDelete}: Endpoint{
+			InputPath:     "/order/2",
+			InputMethod:   http.MethodDelete,
+			OutputStatus:  http.StatusNoContent,
+			OutputContent: nil,
+		},
+		EndpointInputKey{Path: "/order", Method: http.MethodPost}: Endpoint{
+			InputPath:    "/order",
+			InputMethod:  http.MethodPost,
+			OutputStatus: http.StatusCreated,
+			OutputContent: Content{
+				"id": float64(15),
+			},
+		},
 	}
 }

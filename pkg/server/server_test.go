@@ -16,7 +16,7 @@ import (
 
 func TestHandler(t *testing.T) {
 	endpoints := route.Endpoints{
-		route.Endpoint{
+		route.EndpointInputKey{Path: "/search", Method: http.MethodGet}: route.Endpoint{
 			InputPath:    "/search",
 			InputMethod:  http.MethodGet,
 			OutputStatus: http.StatusOK,
@@ -25,7 +25,7 @@ func TestHandler(t *testing.T) {
 				"name": "apple",
 			},
 		},
-		route.Endpoint{
+		route.EndpointInputKey{Path: "/item/14", Method: http.MethodPatch}: route.Endpoint{
 			InputPath:    "/item/14",
 			InputMethod:  http.MethodPatch,
 			OutputStatus: http.StatusInternalServerError,
@@ -81,7 +81,7 @@ func TestHandler(t *testing.T) {
 
 func TestIntegrationServer(t *testing.T) {
 	endpoints := route.Endpoints{
-		route.Endpoint{
+		route.EndpointInputKey{Path: "/item", Method: http.MethodPost}: route.Endpoint{
 			InputPath:    "/item",
 			InputMethod:  http.MethodPost,
 			OutputStatus: http.StatusCreated,
