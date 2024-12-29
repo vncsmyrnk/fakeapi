@@ -42,10 +42,7 @@ func newEndpointsFromEndpointArray(endpointsArray []Endpoint) Endpoints {
 }
 
 func newEndpointCompositeKeyFromRequest(request Request) EndpointInputKey {
-	return EndpointInputKey{
-		Path:   request.Path,
-		Method: request.Method,
-	}
+	return EndpointInputKey(request)
 }
 
 func newEndpointCompositeKeyFromEndpoint(endpoint Endpoint) EndpointInputKey {
