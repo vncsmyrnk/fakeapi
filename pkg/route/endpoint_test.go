@@ -72,7 +72,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 	{
 		"path": "/order",
 		"method": "POST",
-		"status": 200,
+		"status": 201,
 		"content": {
 			"price": 340,
 			"shipping": {
@@ -111,7 +111,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 				EndpointInputKey{Path: "/order", Method: http.MethodPost}: Endpoint{
 					InputPath:    "/order",
 					InputMethod:  http.MethodPost,
-					OutputStatus: http.StatusOK,
+					OutputStatus: http.StatusCreated,
 					OutputContent: map[string]any{
 						"price": float64(340),
 						"shipping": map[string]interface{}{
