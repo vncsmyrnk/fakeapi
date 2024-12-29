@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// Content represents what an endpoint must return
 type Content map[string]any
 
 type Endpoint struct {
