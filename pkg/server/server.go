@@ -19,11 +19,11 @@ type Server struct {
 	Endpoints route.Endpoints
 }
 
-// ServerOption adds the capability of creating a server with options
-type ServerOption func(*Server)
+// Option adds the capability of creating a server with options
+type Option func(*Server)
 
 // NewServer returns a runnable Server.
-func NewServer(opts ...ServerOption) *Server {
+func NewServer(opts ...Option) *Server {
 	s := &Server{Port: defaultServerPort}
 	for _, opt := range opts {
 		opt(s)
@@ -32,14 +32,14 @@ func NewServer(opts ...ServerOption) *Server {
 }
 
 // WithPort initializes the server's port
-func WithPort(port int16) ServerOption {
+func WithPort(port int16) Option {
 	return func(s *Server) {
 		s.Port = port
 	}
 }
 
 // WithPort initializes the server's endpoints
-func WithEndpoints(endpoints route.Endpoints) ServerOption {
+func WithEndpoints(endpoints route.Endpoints) Option {
 	return func(s *Server) {
 		s.Endpoints = endpoints
 	}
