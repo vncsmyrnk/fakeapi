@@ -3,3 +3,13 @@
 # Fake API
 
 CLI for dummy REST API for testing other software.
+
+Fake API allows you to quickly set up and run a RESTful API server with customizable endpoints and responses. This makes it an ideal tool for developers who need a reliable and easy-to-use mock server for testing their software without relying on external services.
+
+## Examples
+
+Comming soon...
+
+## Development
+
+Coming soon...
