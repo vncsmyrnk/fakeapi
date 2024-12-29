@@ -39,6 +39,9 @@ func main() {
 		stdlog.Fatal(err)
 	}
 
-	server := server.NewServer(8080, endpoints)
-	server.Run()
+	server := server.NewServer(
+		server.WithPort(int16(8080)),
+		server.WithEndpoints(endpoints),
+	)
+	server.Start()
 }
