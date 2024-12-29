@@ -65,5 +65,9 @@ func (s server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(activeEndpoint.OutputStatus)
-	json.NewEncoder(w).Encode(activeEndpoint.OutputContent)
+
+	err = json.NewEncoder(w).Encode(activeEndpoint.OutputContent)
+	if err != nil {
+		log.Error(err)
+	}
 }
