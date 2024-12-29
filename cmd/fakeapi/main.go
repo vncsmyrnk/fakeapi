@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	stdlog "log"
 	"os"
@@ -12,10 +13,15 @@ import (
 
 type cliArgs struct {
 	FilePath string
+	Port     int16
 }
 
 func newCLIArgs() (*cliArgs, error) {
-	if len(os.Args) < 2 {
+	port := flag.Int("port", 8080, "Port to run the server on")
+	flag.Parse()
+
+	params := flag.Args()
+	if len(params) < 1 {
 		return nil, errors.New("Inform the needed parameters")
 	}
 
@@ -23,9 +29,9 @@ func newCLIArgs() (*cliArgs, error) {
 	if err != nil {
 		return nil, err
 	}
-	filePath := fmt.Sprintf("%s/%s", dir, os.Args[1])
+	filePath := fmt.Sprintf("%s/%s", dir, params[0])
 
-	return &cliArgs{FilePath: filePath}, nil
+	return &cliArgs{FilePath: filePath, Port: int16(*port)}, nil
 }
 
 func main() {
@@ -40,7 +46,7 @@ func main() {
 	}
 
 	server := server.NewServer(
-		server.WithPort(int16(8080)),
+		server.WithPort(cliArgs.Port),
 		server.WithEndpoints(endpoints),
 	)
 
