@@ -9,7 +9,7 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
+    - revive
 
 run:
   timeout: 5m
