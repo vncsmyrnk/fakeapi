@@ -47,6 +47,7 @@ func WithEndpoints(endpoints route.Endpoints) Option {
 // Start spins up the Server.
 func (s Server) Start() error {
 	http.HandleFunc("/", s.serveHTTP)
+	log.Info(fmt.Sprintf("Server running at %d", s.Port))
 	return http.ListenAndServe(fmt.Sprintf(":%d", s.Port), nil)
 }
 
