@@ -10,13 +10,19 @@ import (
 var ErrNoParams = errors.New("no params were informed")
 
 type cliArgs struct {
+	Help     bool
 	FilePath string
 	Port     int16
 }
 
 func newCLIArgs() (*cliArgs, error) {
 	port := flag.Int("port", 8080, "Port to run the server on")
+	help := flag.Bool("help", false, "Display this help section")
 	flag.Parse()
+
+	if *help {
+		return &cliArgs{Help: true}, nil
+	}
 
 	params := flag.Args()
 	if len(params) < 1 {

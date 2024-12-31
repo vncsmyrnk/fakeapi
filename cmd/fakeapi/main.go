@@ -16,6 +16,11 @@ func main() {
 		return
 	}
 
+	if cliArgs.Help {
+		printHelp()
+		return
+	}
+
 	endpoints, err := route.NewEndpointsFromFile(cliArgs.FilePath)
 	if err != nil {
 		log.Fatal(err)
