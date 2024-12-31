@@ -11,7 +11,9 @@ Fake API allows you to quickly set up and run a RESTful API server with customiz
 
 ## Examples
 
-You are building a client interface for an app that does not yet have its backend services properly set up. You only have a contract of what the backend will be in the future. How can you mock this API in a way that behaves as closely as possible to the real one? Fake API was designed to address this issue. It is useful not only for building frontend interfaces but also whenever you need to mock a REST service with customizable controls.
+You are building a client interface for an app that does not yet have its backend services properly set up. You only have a contract of what the backend will be in the future. How can you mock this API in a way that behaves as closely as possible to the real one? Fake API was designed to address this issue.
+
+It is useful not only for building frontend interfaces but also whenever you need to mock a REST service with customizable controls.
 
 ```sh
 cat <<EOF > server-config.json
