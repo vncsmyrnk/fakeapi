@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
+	timemock "fakeapi/internal/time/mock"
 	"fakeapi/pkg/route"
 )
 
@@ -24,6 +26,7 @@ func TestHandler(t *testing.T) {
 				"id":   1,
 				"name": "apple",
 			},
+			OutputDelaySeconds: 10,
 		},
 		route.EndpointInputKey{Path: "/item", Method: http.MethodGet}: route.Endpoint{
 			InputPath:    "/item",
@@ -48,6 +51,11 @@ func TestHandler(t *testing.T) {
 				"error": "server failed",
 			},
 		},
+		route.EndpointInputKey{Path: "/cart", Method: http.MethodPost}: route.Endpoint{
+			InputPath:    "/cart",
+			InputMethod:  http.MethodPost,
+			OutputStatus: http.StatusNoContent,
+		},
 	}
 
 	testCases := []struct {
@@ -56,6 +64,8 @@ func TestHandler(t *testing.T) {
 		path           string
 		expectedStatus int
 		expectedBody   route.Content
+		expectedDelay  time.Duration
+		shouldBeFound  bool
 		bodyArray      bool
 	}{
 		{
@@ -64,6 +74,8 @@ func TestHandler(t *testing.T) {
 			path:           "/search",
 			expectedStatus: http.StatusOK,
 			expectedBody:   map[string]any{"id": float64(1), "name": "apple"},
+			expectedDelay:  10 * time.Second,
+			shouldBeFound:  true,
 		},
 		{
 			name:           "valid request with an array",
@@ -80,14 +92,20 @@ func TestHandler(t *testing.T) {
 					"name": "strawberry",
 				},
 			},
-			bodyArray: true,
+			shouldBeFound: true,
+			bodyArray:     true,
 		},
 		{
-			name:           "path not found",
+			name:   "path not found",
+			method: http.MethodPost,
+			path:   "/news/today",
+		},
+		{
+			name:           "valid request with empty response",
 			method:         http.MethodPost,
-			path:           "/news/today",
-			expectedStatus: http.StatusNotFound,
-			expectedBody:   nil,
+			path:           "/cart",
+			expectedStatus: http.StatusNoContent,
+			shouldBeFound:  true,
 		},
 	}
 
@@ -96,37 +114,57 @@ func TestHandler(t *testing.T) {
 			req := httptest.NewRequest(tc.method, tc.path, nil)
 			w := httptest.NewRecorder()
 
-			server := NewServer(WithEndpoints(endpoints))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			timeProvider := timemock.NewMockProvider(ctrl)
+
+			if tc.shouldBeFound {
+				timeProvider.EXPECT().Sleep(tc.expectedDelay)
+			}
+
+			server := NewServer(
+				WithEndpoints(endpoints),
+				WithTimeProvider(timeProvider),
+			)
 			server.serveHTTP(w, req)
+
+			if !tc.shouldBeFound {
+				assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
+				return
+			}
 
 			assert.Equal(t, tc.expectedStatus, w.Result().StatusCode)
 
-			if tc.expectedBody != nil {
-				var responseBody any
-				err := json.NewDecoder(w.Body).Decode(&responseBody)
-				assert.NoError(t, err)
+			if tc.expectedBody == nil {
+				assert.Empty(t, w.Body.String())
+				return
+			}
 
-				if tc.bodyArray {
-					actual, ok := responseBody.([]any)
-					if !ok {
-						t.Fatalf("Expected JSON array, got %T", responseBody)
-					}
+			var responseBody any
+			err := json.NewDecoder(w.Body).Decode(&responseBody)
+			assert.NoError(t, err)
 
-					var result []map[string]any
-					for _, item := range actual {
-						mapItem, ok := item.(map[string]any)
-						if !ok {
-							t.Fatalf("Expected map[string]any, got %T", item)
-						}
-						result = append(result, mapItem)
-					}
-
-					responseBody = result
+			if tc.bodyArray {
+				actual, ok := responseBody.([]any)
+				if !ok {
+					t.Fatalf("Expected JSON array, got %T", responseBody)
 				}
 
-				assert.Equal(t, tc.expectedBody, responseBody)
-				assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+				var result []map[string]any
+				for _, item := range actual {
+					mapItem, ok := item.(map[string]any)
+					if !ok {
+						t.Fatalf("Expected map[string]any, got %T", item)
+					}
+					result = append(result, mapItem)
+				}
+
+				responseBody = result
 			}
+
+			assert.Equal(t, tc.expectedBody, responseBody)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 		})
 	}
 }
