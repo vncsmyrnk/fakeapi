@@ -117,7 +117,7 @@ func TestHandler(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			timeProvider := timemock.NewMockTimeProvider(ctrl)
+			timeProvider := timemock.NewMockProvider(ctrl)
 
 			if tc.shouldBeFound {
 				timeProvider.EXPECT().Sleep(tc.expectedDelay)

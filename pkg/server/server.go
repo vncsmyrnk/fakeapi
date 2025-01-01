@@ -18,7 +18,7 @@ const defaultServerPort int16 = 8080
 type Server struct {
 	Port         int16
 	Endpoints    route.Endpoints
-	TimeProvider time.TimeProvider
+	TimeProvider time.Provider
 }
 
 // Option adds the capability of creating a server with options
@@ -26,7 +26,7 @@ type Option func(*Server)
 
 // NewServer returns a runnable Server.
 func NewServer(opts ...Option) *Server {
-	s := &Server{Port: defaultServerPort, TimeProvider: time.RealTimeProvider{}}
+	s := &Server{Port: defaultServerPort, TimeProvider: time.RealProvider{}}
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -48,7 +48,7 @@ func WithEndpoints(endpoints route.Endpoints) Option {
 }
 
 // WithPort initializes the server's endpoints
-func WithTimeProvider(timeProvider time.TimeProvider) Option {
+func WithTimeProvider(timeProvider time.Provider) Option {
 	return func(s *Server) {
 		s.TimeProvider = timeProvider
 	}

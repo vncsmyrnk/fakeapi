@@ -16,38 +16,38 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockTimeProvider is a mock of TimeProvider interface.
-type MockTimeProvider struct {
+// MockProvider is a mock of Provider interface.
+type MockProvider struct {
 	ctrl     *gomock.Controller
-	recorder *MockTimeProviderMockRecorder
+	recorder *MockProviderMockRecorder
 	isgomock struct{}
 }
 
-// MockTimeProviderMockRecorder is the mock recorder for MockTimeProvider.
-type MockTimeProviderMockRecorder struct {
-	mock *MockTimeProvider
+// MockProviderMockRecorder is the mock recorder for MockProvider.
+type MockProviderMockRecorder struct {
+	mock *MockProvider
 }
 
-// NewMockTimeProvider creates a new mock instance.
-func NewMockTimeProvider(ctrl *gomock.Controller) *MockTimeProvider {
-	mock := &MockTimeProvider{ctrl: ctrl}
-	mock.recorder = &MockTimeProviderMockRecorder{mock}
+// NewMockProvider creates a new mock instance.
+func NewMockProvider(ctrl *gomock.Controller) *MockProvider {
+	mock := &MockProvider{ctrl: ctrl}
+	mock.recorder = &MockProviderMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockTimeProvider) EXPECT() *MockTimeProviderMockRecorder {
+func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 	return m.recorder
 }
 
 // Sleep mocks base method.
-func (m *MockTimeProvider) Sleep(d time.Duration) {
+func (m *MockProvider) Sleep(d time.Duration) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Sleep", d)
 }
 
 // Sleep indicates an expected call of Sleep.
-func (mr *MockTimeProviderMockRecorder) Sleep(d any) *gomock.Call {
+func (mr *MockProviderMockRecorder) Sleep(d any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sleep", reflect.TypeOf((*MockTimeProvider)(nil).Sleep), d)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sleep", reflect.TypeOf((*MockProvider)(nil).Sleep), d)
 }

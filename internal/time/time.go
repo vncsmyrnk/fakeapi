@@ -3,12 +3,12 @@ package time
 import "time"
 
 //go:generate mockgen -source=time.go -destination=mock/time.go -package=time
-type TimeProvider interface {
+type Provider interface {
 	Sleep(d time.Duration)
 }
 
-type RealTimeProvider struct{}
+type RealProvider struct{}
 
-func (RealTimeProvider) Sleep(d time.Duration) {
+func (RealProvider) Sleep(d time.Duration) {
 	time.Sleep(d)
 }
