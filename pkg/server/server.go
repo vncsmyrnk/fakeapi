@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	stdtime "time"
 
 	log "github.com/sirupsen/logrus"
 
+	"fakeapi/internal/time"
 	"fakeapi/pkg/route"
 )
 
@@ -14,8 +16,9 @@ const defaultServerPort int16 = 8080
 
 // Server represents the components needed for a server to run
 type Server struct {
-	Port      int16
-	Endpoints route.Endpoints
+	Port         int16
+	Endpoints    route.Endpoints
+	TimeProvider time.TimeProvider
 }
 
 // Option adds the capability of creating a server with options
@@ -23,7 +26,7 @@ type Option func(*Server)
 
 // NewServer returns a runnable Server.
 func NewServer(opts ...Option) *Server {
-	s := &Server{Port: defaultServerPort}
+	s := &Server{Port: defaultServerPort, TimeProvider: time.RealTimeProvider{}}
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -44,6 +47,13 @@ func WithEndpoints(endpoints route.Endpoints) Option {
 	}
 }
 
+// WithPort initializes the server's endpoints
+func WithTimeProvider(timeProvider time.TimeProvider) Option {
+	return func(s *Server) {
+		s.TimeProvider = timeProvider
+	}
+}
+
 // Start spins up the Server.
 func (s Server) Start() error {
 	http.HandleFunc("/", s.serveHTTP)
@@ -61,6 +71,9 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Info(request.String())
+
+	delayDuration := stdtime.Duration(activeEndpoint.OutputDelaySeconds) * stdtime.Second
+	s.TimeProvider.Sleep(delayDuration)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(activeEndpoint.OutputStatus)

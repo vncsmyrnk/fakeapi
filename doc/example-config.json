@@ -24,5 +24,12 @@
         "name": "apple"
       }
     ]
+  },
+  {
+    "path": "/order/1",
+    "method": "PUT",
+    "status": 201,
+    "delay_in_seconds": 4,
+    "content": null
   }
 ]

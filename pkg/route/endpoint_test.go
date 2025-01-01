@@ -85,6 +85,7 @@ func TestNewEndpointsFromFile(t *testing.T) {
 		"path": "/payment/3",
 		"method": "DELETE",
 		"status": 503,
+		"delay_in_seconds": 5,
 		"content": {
 			"error": "server unavailable",
 			"trace": "..."
@@ -121,9 +122,10 @@ func TestNewEndpointsFromFile(t *testing.T) {
 					},
 				},
 				EndpointInputKey{Path: "/payment/3", Method: http.MethodDelete}: Endpoint{
-					InputPath:    "/payment/3",
-					InputMethod:  http.MethodDelete,
-					OutputStatus: http.StatusServiceUnavailable,
+					InputPath:          "/payment/3",
+					InputMethod:        http.MethodDelete,
+					OutputStatus:       http.StatusServiceUnavailable,
+					OutputDelaySeconds: 5,
 					OutputContent: map[string]any{
 						"error": "server unavailable",
 						"trace": "...",
@@ -166,10 +168,11 @@ func generateMockEndpoints() Endpoints {
 			},
 		},
 		EndpointInputKey{Path: "/order/2", Method: http.MethodDelete}: Endpoint{
-			InputPath:     "/order/2",
-			InputMethod:   http.MethodDelete,
-			OutputStatus:  http.StatusNoContent,
-			OutputContent: nil,
+			InputPath:          "/order/2",
+			InputMethod:        http.MethodDelete,
+			OutputStatus:       http.StatusNoContent,
+			OutputDelaySeconds: 4,
+			OutputContent:      nil,
 		},
 		EndpointInputKey{Path: "/order", Method: http.MethodPost}: Endpoint{
 			InputPath:    "/order",

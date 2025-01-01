@@ -12,10 +12,11 @@ type Content any
 
 // Endpoint represents a custom endpoint set by the user.
 type Endpoint struct {
-	InputPath     string  `json:"path"`
-	InputMethod   string  `json:"method"`
-	OutputStatus  int     `json:"status"`
-	OutputContent Content `json:"content"`
+	InputPath          string  `json:"path"`
+	InputMethod        string  `json:"method"`
+	OutputStatus       int     `json:"status"`
+	OutputDelaySeconds int     `json:"delay_in_seconds"`
+	OutputContent      Content `json:"content"`
 }
 
 // EndpointInputKey serves as an endpoint identifier

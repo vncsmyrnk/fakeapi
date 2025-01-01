@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
+	timemock "fakeapi/internal/time/mock"
 	"fakeapi/pkg/route"
 )
 
@@ -24,6 +26,7 @@ func TestHandler(t *testing.T) {
 				"id":   1,
 				"name": "apple",
 			},
+			OutputDelaySeconds: 10,
 		},
 		route.EndpointInputKey{Path: "/item", Method: http.MethodGet}: route.Endpoint{
 			InputPath:    "/item",
@@ -56,6 +59,8 @@ func TestHandler(t *testing.T) {
 		path           string
 		expectedStatus int
 		expectedBody   route.Content
+		expectedDelay  time.Duration
+		shouldBeFound  bool
 		bodyArray      bool
 	}{
 		{
@@ -64,6 +69,8 @@ func TestHandler(t *testing.T) {
 			path:           "/search",
 			expectedStatus: http.StatusOK,
 			expectedBody:   map[string]any{"id": float64(1), "name": "apple"},
+			expectedDelay:  10 * time.Second,
+			shouldBeFound:  true,
 		},
 		{
 			name:           "valid request with an array",
@@ -80,14 +87,13 @@ func TestHandler(t *testing.T) {
 					"name": "strawberry",
 				},
 			},
-			bodyArray: true,
+			shouldBeFound: true,
+			bodyArray:     true,
 		},
 		{
-			name:           "path not found",
-			method:         http.MethodPost,
-			path:           "/news/today",
-			expectedStatus: http.StatusNotFound,
-			expectedBody:   nil,
+			name:   "path not found",
+			method: http.MethodPost,
+			path:   "/news/today",
 		},
 	}
 
@@ -96,10 +102,26 @@ func TestHandler(t *testing.T) {
 			req := httptest.NewRequest(tc.method, tc.path, nil)
 			w := httptest.NewRecorder()
 
-			server := NewServer(WithEndpoints(endpoints))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			timeProvider := timemock.NewMockTimeProvider(ctrl)
+
+			if tc.shouldBeFound {
+				timeProvider.EXPECT().Sleep(tc.expectedDelay)
+			}
+
+			server := NewServer(
+				WithEndpoints(endpoints),
+				WithTimeProvider(timeProvider),
+			)
 			server.serveHTTP(w, req)
 
-			assert.Equal(t, tc.expectedStatus, w.Result().StatusCode)
+			if tc.shouldBeFound {
+				assert.Equal(t, tc.expectedStatus, w.Result().StatusCode)
+			} else {
+				assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
+			}
 
 			if tc.expectedBody != nil {
 				var responseBody any

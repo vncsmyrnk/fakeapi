@@ -4,6 +4,9 @@ default:
 test:
   go test -cover ./...
 
+generate:
+  go generate ./...
+
 build:
   go build ./cmd/fakeapi
 
