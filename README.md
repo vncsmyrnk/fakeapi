@@ -59,10 +59,6 @@ curl -L https://github.com/vncsmyrnk/fakeapi/releases/latest/download/fakeapi-li
 mv fakeapi ~/.local/bin # Move it to an executable path
 ```
 
-### Via package managers
-
-Work in progress...
-
 ## Development
 
 This project is still in development. Feel free to open a issue or a PR!
