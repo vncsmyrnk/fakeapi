@@ -51,6 +51,11 @@ func TestHandler(t *testing.T) {
 				"error": "server failed",
 			},
 		},
+		route.EndpointInputKey{Path: "/cart", Method: http.MethodPost}: route.Endpoint{
+			InputPath:    "/cart",
+			InputMethod:  http.MethodPost,
+			OutputStatus: http.StatusNoContent,
+		},
 	}
 
 	testCases := []struct {
@@ -95,6 +100,13 @@ func TestHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/news/today",
 		},
+		{
+			name:           "valid request with empty response",
+			method:         http.MethodPost,
+			path:           "/cart",
+			expectedStatus: http.StatusNoContent,
+			shouldBeFound:  true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -117,38 +129,42 @@ func TestHandler(t *testing.T) {
 			)
 			server.serveHTTP(w, req)
 
-			if tc.shouldBeFound {
-				assert.Equal(t, tc.expectedStatus, w.Result().StatusCode)
-			} else {
+			if !tc.shouldBeFound {
 				assert.Equal(t, http.StatusNotFound, w.Result().StatusCode)
+				return
 			}
 
-			if tc.expectedBody != nil {
-				var responseBody any
-				err := json.NewDecoder(w.Body).Decode(&responseBody)
-				assert.NoError(t, err)
+			assert.Equal(t, tc.expectedStatus, w.Result().StatusCode)
 
-				if tc.bodyArray {
-					actual, ok := responseBody.([]any)
-					if !ok {
-						t.Fatalf("Expected JSON array, got %T", responseBody)
-					}
+			if tc.expectedBody == nil {
+				assert.Empty(t, w.Body.String())
+				return
+			}
 
-					var result []map[string]any
-					for _, item := range actual {
-						mapItem, ok := item.(map[string]any)
-						if !ok {
-							t.Fatalf("Expected map[string]any, got %T", item)
-						}
-						result = append(result, mapItem)
-					}
+			var responseBody any
+			err := json.NewDecoder(w.Body).Decode(&responseBody)
+			assert.NoError(t, err)
 
-					responseBody = result
+			if tc.bodyArray {
+				actual, ok := responseBody.([]any)
+				if !ok {
+					t.Fatalf("Expected JSON array, got %T", responseBody)
 				}
 
-				assert.Equal(t, tc.expectedBody, responseBody)
-				assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+				var result []map[string]any
+				for _, item := range actual {
+					mapItem, ok := item.(map[string]any)
+					if !ok {
+						t.Fatalf("Expected map[string]any, got %T", item)
+					}
+					result = append(result, mapItem)
+				}
+
+				responseBody = result
 			}
+
+			assert.Equal(t, tc.expectedBody, responseBody)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 		})
 	}
 }

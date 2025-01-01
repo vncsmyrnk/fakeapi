@@ -28,7 +28,7 @@
   {
     "path": "/order/1",
     "method": "PUT",
-    "status": 201,
+    "status": 204,
     "delay_in_seconds": 4,
     "content": null
   }
