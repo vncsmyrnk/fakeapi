@@ -4,6 +4,9 @@ default:
 test:
   go test -cover ./...
 
+coverage:
+  go test -coverprofile=coverage.txt ./...
+
 generate:
   go generate ./...
 

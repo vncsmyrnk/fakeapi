@@ -1,5 +1,6 @@
 [![CI workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml)
 [![Release workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/vncsmyrnk/fakeapi/graph/badge.svg?token=OHOKF0SD8T)](https://codecov.io/gh/vncsmyrnk/fakeapi)
 [![contributions](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/vncsmyrnk/fakeapi/issues)
 [![Issue count](https://img.shields.io/github/issues-search?query=repo%3Avncsmyrnk%2Ffakeapi%20is%3Aopen&label=open%20issues)](https://github.com/vncsmyrnk/fakeapi/issues)
 
@@ -57,10 +58,6 @@ Example:
 curl -L https://github.com/vncsmyrnk/fakeapi/releases/latest/download/fakeapi-linux-amd64 -o fakeapi # Download the correct binary according to your settings
 mv fakeapi ~/.local/bin # Move it to an executable path
 ```
-
-### Via package managers
-
-Work in progress...
 
 ## Development
 
