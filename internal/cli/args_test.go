@@ -1,4 +1,4 @@
-package args
+package cli
 
 import (
 	"flag"
@@ -59,7 +59,7 @@ func TestFlags(t *testing.T) {
 			resetFlags()
 
 			os.Args = tc.cliArgs
-			args, err := NewCLIArgs()
+			args, err := NewArgs()
 
 			if tc.error {
 				assert.Error(t, err)

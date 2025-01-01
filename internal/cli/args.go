@@ -1,4 +1,4 @@
-package args
+package cli
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ type Args struct {
 	Port     int16
 }
 
-func NewCLIArgs() (*Args, error) {
+func NewArgs() (*Args, error) {
 	port := flag.Int("port", 8080, "Port to run the server on")
 	help := flag.Bool("help", false, "Display this help section")
 	flag.Parse()
