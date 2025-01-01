@@ -12,7 +12,7 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    container: golang:1.23-alpine
+    container: golang:1.23-bookworm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,3 +32,4 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: vncsmyrnk/fakeapi
