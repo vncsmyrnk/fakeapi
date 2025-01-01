@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"log"
 
+	args "fakeapi/internal/cli"
 	"fakeapi/pkg/route"
 	"fakeapi/pkg/server"
 )
 
 func main() {
 	setupLog()
-	cliArgs, err := newCLIArgs()
+	cliArgs, err := args.NewCLIArgs()
 	if err != nil {
 		handleCLIErrors(err)
 		return
 	}
 
 	if cliArgs.Help {
-		printHelp()
+		args.PrintHelp()
 		return
 	}
 
@@ -44,8 +45,8 @@ func handleCLIErrors(err error) {
 
 	fmt.Println(err.Error())
 
-	if err == ErrNoParams {
-		printHelp()
+	if err == args.ErrNoParams {
+		args.PrintHelp()
 		return
 	}
 
