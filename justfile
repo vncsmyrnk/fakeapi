@@ -4,6 +4,9 @@ default:
 test:
   go test -cover ./...
 
+run *args:
+  go run cmd/fakeapi/main.go {{args}}
+
 coverage:
   go test -coverprofile=coverage.txt ./...
 
