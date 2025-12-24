@@ -5,12 +5,13 @@ import (
 	"log"
 
 	"fakeapi/internal/cli"
+	internallog "fakeapi/internal/log"
 	"fakeapi/pkg/route"
 	"fakeapi/pkg/server"
 )
 
 func main() {
-	setupLog()
+	internallog.SetupLog()
 	cliArgs, err := cli.NewArgs()
 	if err != nil {
 		handleCLIErrors(err)
