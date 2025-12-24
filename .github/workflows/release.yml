@@ -25,7 +25,15 @@ jobs:
       - name: Build binary
         run: |
           mkdir -p dist
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/fakeapi-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/fakeapi
+          GOOS=${{ matrix.goos }}
+          GOARCH=${{ matrix.goarch }}
+          VERSION=${{ github.ref_name }}
+          COMMIT=$(git rev-parse HEAD)
+
+          go build \
+            -ldflags "-X 'fakeapi/internal/version.Version=$VERSION' \
+                      -X 'fakeapi/internal/version.Commit=$COMMIT'" \
+            -o dist/fakeapi-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/fakeapi
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4

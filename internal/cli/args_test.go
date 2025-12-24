@@ -46,6 +46,11 @@ func TestFlags(t *testing.T) {
 			cliArgs:      []string{"cmd/fakeapi", "--help"},
 			expectedArgs: &Args{Help: true},
 		},
+		{
+			name:         "version",
+			cliArgs:      []string{"cmd/fakeapi", "--version"},
+			expectedArgs: &Args{Version: true},
+		},
 	}
 
 	for _, tc := range testCases {

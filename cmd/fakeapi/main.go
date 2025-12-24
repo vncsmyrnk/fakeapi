@@ -22,6 +22,11 @@ func main() {
 		return
 	}
 
+	if cliArgs.Version {
+		cli.PrintVersion()
+		return
+	}
+
 	endpoints, err := route.NewEndpointsFromFile(cliArgs.FilePath)
 	if err != nil {
 		log.Fatal(err)

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+
+	"fakeapi/internal/version"
 )
 
 var ErrNoParams = errors.New("no params were informed")
@@ -12,15 +14,22 @@ type Args struct {
 	Help     bool
 	FilePath string
 	Port     int16
+	Version  bool
 }
 
 func NewArgs() (*Args, error) {
 	port := flag.Int("port", 8080, "Port to run the server on")
 	help := flag.Bool("help", false, "Display this help section")
+	version := flag.Bool("version", false, "Display the app version")
 	flag.Parse()
 
-	if *help {
-		return &Args{Help: true}, nil
+	args := &Args{
+		Help:    *help,
+		Version: *version,
+	}
+
+	if *help || *version {
+		return args, nil
 	}
 
 	params := flag.Args()
@@ -29,7 +38,9 @@ func NewArgs() (*Args, error) {
 	}
 
 	filePath := params[0]
-	return &Args{FilePath: filePath, Port: int16(*port)}, nil
+	args.FilePath = filePath
+	args.Port = int16(*port)
+	return args, nil
 }
 
 func PrintHelp() {
@@ -37,4 +48,8 @@ func PrintHelp() {
 	fmt.Println("fakeapi is a fully customizable local REST API for testing.\nDetails at https://github.com/vncsmyrnk/fakeapi")
 	fmt.Println("\nflags avaiable:")
 	flag.PrintDefaults()
+}
+
+func PrintVersion() {
+	fmt.Printf("%s\n", version.Version)
 }
