@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 )
 
 var ErrNoParams = errors.New("no params were informed")
@@ -29,12 +28,7 @@ func NewArgs() (*Args, error) {
 		return nil, ErrNoParams
 	}
 
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	filePath := fmt.Sprintf("%s/%s", dir, params[0])
-
+	filePath := params[0]
 	return &Args{FilePath: filePath, Port: int16(*port)}, nil
 }
 

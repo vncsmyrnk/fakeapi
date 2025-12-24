@@ -2,7 +2,6 @@ package cli
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"testing"
 
@@ -14,9 +13,6 @@ func resetFlags() {
 }
 
 func TestFlags(t *testing.T) {
-	dir, err := os.Getwd()
-	assert.Nil(t, err)
-
 	testCases := []struct {
 		name         string
 		cliArgs      []string
@@ -28,7 +24,7 @@ func TestFlags(t *testing.T) {
 			cliArgs: []string{"cmd/fakeapi", "--port", "9090", "file.json"},
 			expectedArgs: &Args{
 				Port:     int16(9090),
-				FilePath: fmt.Sprintf("%s/%s", dir, "file.json"),
+				FilePath: "file.json",
 			},
 		},
 		{
@@ -42,7 +38,7 @@ func TestFlags(t *testing.T) {
 			cliArgs: []string{"cmd/fakeapi", "config.json"},
 			expectedArgs: &Args{
 				Port:     int16(8080),
-				FilePath: fmt.Sprintf("%s/%s", dir, "config.json"),
+				FilePath: "config.json",
 			},
 		},
 		{
