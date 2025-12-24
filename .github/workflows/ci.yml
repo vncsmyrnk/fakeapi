@@ -12,7 +12,7 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    container: golang:1.23-alpine
+    container: golang:1.25-alpine
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -1,8 +1,8 @@
-package time
+package customtime
 
 import "time"
 
-//go:generate mockgen -source=time.go -destination=mock/time.go -package=time
+//go:generate mockgen -source=customtime.go -destination=mock/customtime.go -package=customtime
 type Provider interface {
 	Sleep(d time.Duration)
 }

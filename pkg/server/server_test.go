@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	timemock "fakeapi/internal/time/mock"
+	customtimemock "fakeapi/internal/customtime/mock"
 	"fakeapi/pkg/route"
 )
 
@@ -117,7 +117,7 @@ func TestHandler(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			timeProvider := timemock.NewMockProvider(ctrl)
+			timeProvider := customtimemock.NewMockProvider(ctrl)
 
 			if tc.shouldBeFound {
 				timeProvider.EXPECT().Sleep(tc.expectedDelay)
