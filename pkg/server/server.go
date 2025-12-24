@@ -17,7 +17,7 @@ const defaultServerPort int16 = 8080
 // Server represents the components needed for a server to run
 type Server struct {
 	Port         int16
-	Endpoints    route.Endpoints
+	Endpoints    []route.Endpoint
 	TimeProvider customtime.Provider
 }
 
@@ -41,7 +41,7 @@ func WithPort(port int16) Option {
 }
 
 // WithPort initializes the server's endpoints
-func WithEndpoints(endpoints route.Endpoints) Option {
+func WithEndpoints(endpoints []route.Endpoint) Option {
 	return func(s *Server) {
 		s.Endpoints = endpoints
 	}
@@ -63,26 +63,26 @@ func (s Server) Start() error {
 
 func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	request := route.NewRequestFromHTTPRequest(r)
-	activeEndpoint, err := s.Endpoints.Requested(request)
+	requestedEndpoint, err := request.Endpoint(s.Endpoints)
 	if err != nil {
-		log.Error(fmt.Sprintf("%s not found", request.String()))
+		log.Error(fmt.Sprintf("requested %s but it failed: %s", request.String(), err.Error()))
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	log.Info(request.String())
 
-	delayDuration := stdtime.Duration(activeEndpoint.OutputDelaySeconds) * stdtime.Second
+	delayDuration := stdtime.Duration(requestedEndpoint.OutputDelaySeconds) * stdtime.Second
 	s.TimeProvider.Sleep(delayDuration)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(activeEndpoint.OutputStatus)
+	w.WriteHeader(requestedEndpoint.OutputStatus)
 
-	if activeEndpoint.OutputContent == nil {
+	if requestedEndpoint.OutputContent == nil {
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(activeEndpoint.OutputContent)
+	err = json.NewEncoder(w).Encode(requestedEndpoint.OutputContent)
 	if err != nil {
 		log.Error(err)
 	}

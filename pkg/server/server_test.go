@@ -17,8 +17,8 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	endpoints := route.Endpoints{
-		route.EndpointInputKey{Path: "/search", Method: http.MethodGet}: route.Endpoint{
+	endpoints := []route.Endpoint{
+		{
 			InputPath:    "/search",
 			InputMethod:  http.MethodGet,
 			OutputStatus: http.StatusOK,
@@ -28,7 +28,7 @@ func TestHandler(t *testing.T) {
 			},
 			OutputDelaySeconds: 10,
 		},
-		route.EndpointInputKey{Path: "/item", Method: http.MethodGet}: route.Endpoint{
+		{
 			InputPath:    "/item",
 			InputMethod:  http.MethodGet,
 			OutputStatus: http.StatusOK,
@@ -43,7 +43,7 @@ func TestHandler(t *testing.T) {
 				},
 			},
 		},
-		route.EndpointInputKey{Path: "/item/14", Method: http.MethodPatch}: route.Endpoint{
+		{
 			InputPath:    "/item/14",
 			InputMethod:  http.MethodPatch,
 			OutputStatus: http.StatusInternalServerError,
@@ -51,7 +51,7 @@ func TestHandler(t *testing.T) {
 				"error": "server failed",
 			},
 		},
-		route.EndpointInputKey{Path: "/cart", Method: http.MethodPost}: route.Endpoint{
+		{
 			InputPath:    "/cart",
 			InputMethod:  http.MethodPost,
 			OutputStatus: http.StatusNoContent,
@@ -170,8 +170,8 @@ func TestHandler(t *testing.T) {
 }
 
 func TestIntegrationServer(t *testing.T) {
-	endpoints := route.Endpoints{
-		route.EndpointInputKey{Path: "/item", Method: http.MethodPost}: route.Endpoint{
+	endpoints := []route.Endpoint{
+		{
 			InputPath:    "/item",
 			InputMethod:  http.MethodPost,
 			OutputStatus: http.StatusCreated,

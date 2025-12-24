@@ -26,6 +26,24 @@
     ]
   },
   {
+    "path": "/items/12",
+    "method": "GET",
+    "status": 200,
+    "content": {
+      "id": 2,
+      "name": "apple"
+    }
+  },
+  {
+    "path": "/items/\\d+",
+    "method": "GET",
+    "status": 200,
+    "content": {
+      "id": 1,
+      "name": "orange"
+    }
+  },
+  {
     "path": "/order/1",
     "method": "PUT",
     "status": 204,

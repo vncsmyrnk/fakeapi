@@ -2,7 +2,6 @@ package route
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
 )
@@ -25,21 +24,8 @@ type EndpointInputKey struct {
 	Method string
 }
 
-// Endpoints represents a map of endpoints
-type Endpoints map[EndpointInputKey]Endpoint
-
-// Requested returns the endpoint matched by a request.
-func (es Endpoints) Requested(request Request) (Endpoint, error) {
-	key := newEndpointCompositeKeyFromRequest(request)
-	endpoint, exists := es[key]
-	if !exists {
-		return Endpoint{}, errors.New("endpoint not found")
-	}
-	return endpoint, nil
-}
-
 // NewEndpointsFromFile creates endpoints read from a file.
-func NewEndpointsFromFile(filePath string) (Endpoints, error) {
+func NewEndpointsFromFile(filePath string) ([]Endpoint, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -51,32 +37,11 @@ func NewEndpointsFromFile(filePath string) (Endpoints, error) {
 		return nil, err
 	}
 
-	var endpointsArray []Endpoint
-	err = json.Unmarshal(byteValue, &endpointsArray)
+	var endpoints []Endpoint
+	err = json.Unmarshal(byteValue, &endpoints)
 	if err != nil {
 		return nil, err
 	}
 
-	endpoints := newEndpointsFromEndpointArray(endpointsArray)
 	return endpoints, nil
-}
-
-func newEndpointsFromEndpointArray(endpointsArray []Endpoint) Endpoints {
-	endpoints := make(Endpoints)
-	for _, endpoint := range endpointsArray {
-		key := newEndpointCompositeKeyFromEndpoint(endpoint)
-		endpoints[key] = endpoint
-	}
-	return endpoints
-}
-
-func newEndpointCompositeKeyFromRequest(request Request) EndpointInputKey {
-	return EndpointInputKey(request)
-}
-
-func newEndpointCompositeKeyFromEndpoint(endpoint Endpoint) EndpointInputKey {
-	return EndpointInputKey{
-		Path:   endpoint.InputPath,
-		Method: endpoint.InputMethod,
-	}
 }
