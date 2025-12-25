@@ -4,7 +4,7 @@ default:
 test: unit-test integration-test
 
 unit-test:
-  go test -cover ./...
+  go test -cover $(go list ./... | grep -v \/integration)
 
 integration-test:
   go test -v ./test/integration/...
@@ -16,7 +16,7 @@ debug *args:
   dlv debug --headless --listen=:2345 --api-version=2 cmd/fakeapi/main.go -- {{args}}
 
 coverage:
-  go test -coverprofile=coverage.txt ./...
+  go test -coverprofile=coverage.txt $(go list ./... | grep -v \/integration)
 
 generate:
   go generate ./...
