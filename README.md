@@ -62,3 +62,9 @@ mv fakeapi ~/.local/bin # Move it to an executable path
 ## Development
 
 This project is still in development. Feel free to open a issue or a PR!
+
+To run tests:
+
+```sh
+just test
+```

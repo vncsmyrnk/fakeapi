@@ -1,8 +1,13 @@
 default:
   just --list
 
-test:
+test: unit-test integration-test
+
+unit-test:
   go test -cover ./...
+
+integration-test:
+  go test -v ./test/integration/...
 
 run *args:
   go run cmd/fakeapi/main.go {{args}}

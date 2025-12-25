@@ -1,0 +1,24 @@
+[
+  {
+    "paths": [
+      "/items/(?P<id>\\d+)"
+    ],
+    "methods": [
+      "GET"
+    ],
+    "data": [
+      {
+        "id": 1,
+        "name": "shirt"
+      },
+      {
+        "id": 2,
+        "name": "shoe"
+      },
+      {
+        "id": 3,
+        "name": "pants"
+      }
+    ]
+  }
+]

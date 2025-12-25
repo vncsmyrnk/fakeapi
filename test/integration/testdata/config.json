@@ -1,0 +1,23 @@
+[
+  {
+    "path": "/items/(?P<id>\\d+)",
+    "method": "GET",
+    "status": 200,
+    "content": null
+  },
+  {
+    "path": "/items",
+    "method": "POST",
+    "status": 200,
+    "content": {
+      "id": 1,
+      "name": "This is an item name"
+    }
+  },
+  {
+    "path": "/items/\\d+",
+    "method": "DELETE",
+    "status": 204,
+    "content": null
+  }
+]

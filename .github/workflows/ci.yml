@@ -19,10 +19,16 @@ jobs:
 
       - uses: extractions/setup-just@v2
 
-      - name: lint
+      - name: Lint
         run: just lint
 
-      - name: test coverage
+      - name: Run unit tests
+        run: just unit-test
+
+      - name: Run integration tests
+        run: just integration-test
+
+      - name: Runs test coverage
         run: just coverage
 
       - name: upload coverage
