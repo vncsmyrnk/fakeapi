@@ -3,10 +3,11 @@ package route
 import (
 	"encoding/json"
 	"errors"
+	"fakeapi/internal/customregexp"
+	"fakeapi/internal/customtemplate"
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 )
 
 // EndpointContent represents what an endpoint must return.
@@ -53,6 +54,15 @@ type Endpoint struct {
 }
 
 func (e Endpoint) Content(request Request, dataFilePath string) (EndpointContent, error) {
+	c, err := e.content(request, dataFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.applyTemplateWithRequestBody(c, request)
+}
+
+func (e Endpoint) content(request Request, dataFilePath string) (EndpointContent, error) {
 	if e.OutputContent != nil {
 		return e.OutputContent, nil
 	}
@@ -74,58 +84,34 @@ func (e Endpoint) Content(request Request, dataFilePath string) (EndpointContent
 	return endpointFilteredContent, nil
 }
 
+func (e Endpoint) applyTemplateWithRequestBody(
+	content EndpointContent, request Request,
+) (EndpointContent, error) {
+	if len(request.Body) == 0 {
+		return content, nil
+	}
+
+	templateVariables, err := e.requestBodyToTemplateVariables(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build template variables: %w", err)
+	}
+
+	return customtemplate.Execute(content, templateVariables)
+}
+
+func (e Endpoint) requestBodyToTemplateVariables(request Request) (map[string]any, error) {
+	var templateVariables map[string]any
+	if err := json.Unmarshal(request.Body, &templateVariables); err != nil {
+		return nil, fmt.Errorf("failed to build template variables: %w", err)
+	}
+
+	return templateVariables, nil
+}
+
 func (e Endpoint) filterEnpointContentByRegexpNames(
 	requestPath string, endpointContent EndpointPossibleContent,
 ) EndpointContent {
-	contentList, ok := endpointContent.Data.([]any)
-	if !ok {
-		return nil
-	}
-
-	re := regexp.MustCompile(e.InputPath)
-	match := re.FindStringSubmatch(requestPath)
-	if match == nil {
-		return nil
-	}
-
-	if re.NumSubexp() == 0 {
-		return endpointContent
-	}
-
-	regexpGroupNames := make(map[string]string)
-	for i, name := range re.SubexpNames() {
-		if i == 0 {
-			continue
-		}
-		regexpGroupNames[name] = match[i]
-	}
-
-	for _, content := range contentList {
-		c, ok := content.(map[string]any)
-		if !ok {
-			break
-		}
-
-		var matches int
-		for k, v := range regexpGroupNames {
-			contentPropertyValue, ok := c[k]
-			if !ok {
-				continue
-			}
-
-			strContentPropertyValue := fmt.Sprintf("%v", contentPropertyValue)
-			strPossibleValue := fmt.Sprintf("%v", v)
-			if strContentPropertyValue == strPossibleValue {
-				matches++
-			}
-		}
-
-		if matches == len(regexpGroupNames) {
-			return c
-		}
-	}
-
-	return nil
+	return customregexp.FilterBySubexpNames(e.InputPath, requestPath, endpointContent.Data)
 }
 
 func (e Endpoint) getPossibleContent(

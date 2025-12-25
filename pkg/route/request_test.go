@@ -10,7 +10,8 @@ import (
 
 func TestNewRequestFromHTTPRequest(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/test-path", nil)
-	request := NewRequestFromHTTPRequest(r)
+	request, err := NewRequestFromHTTPRequest(r)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "/test-path", request.Path, "Expected Path to be '/test-path'")
 	assert.Equal(t, http.MethodGet, request.Method, "Expected Method to be 'GET'")

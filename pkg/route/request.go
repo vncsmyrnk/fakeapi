@@ -1,7 +1,9 @@
 package route
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"regexp"
@@ -10,10 +12,21 @@ import (
 type Request struct {
 	Path   string
 	Method string
+	Body   []byte
 }
 
-func NewRequestFromHTTPRequest(r *http.Request) Request {
-	return Request{Path: r.URL.Path, Method: r.Method}
+func NewRequestFromHTTPRequest(r *http.Request) (Request, error) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return Request{}, err
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	return Request{
+		Path:   r.URL.Path,
+		Method: r.Method,
+		Body:   body,
+	}, nil
 }
 
 func (r Request) String() string {

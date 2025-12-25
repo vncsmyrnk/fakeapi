@@ -116,6 +116,25 @@ func TestEndpointContent(t *testing.T) {
 			},
 		},
 		{
+			name: "endpoint content uses path parameters",
+			request: Request{
+				Path:   "/items",
+				Method: http.MethodPost,
+				Body:   []byte(`{"id": 123}`),
+			},
+			endpoint: Endpoint{
+				InputPath:    "/items",
+				InputMethod:  http.MethodPost,
+				OutputStatus: http.StatusOK,
+				OutputContent: map[string]any{
+					"item_id": "{{.id}}",
+				},
+			},
+			expectedEndpointContent: map[string]any{
+				"item_id": "123",
+			},
+		},
+		{
 			name:                    "possible content is broken",
 			possibleContentFilePath: brokenPossibleContentFileName,
 			request: Request{

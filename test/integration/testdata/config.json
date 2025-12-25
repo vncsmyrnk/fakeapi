@@ -11,7 +11,9 @@
     "status": 200,
     "content": {
       "id": 1,
-      "name": "This is an item name"
+      "name": "{{ .name }}",
+      "validated": "{{ .config.validated | raw }}",
+      "age": "{{ .age_years | raw }}"
     }
   },
   {
@@ -19,5 +21,15 @@
     "method": "DELETE",
     "status": 204,
     "content": null
+  },
+  {
+    "path": "/orders",
+    "method": "POST",
+    "status": 200,
+    "content": {
+      "id": 1,
+      "name": "a hardcoded name",
+      "validated": "a hardcoded validated"
+    }
   }
 ]

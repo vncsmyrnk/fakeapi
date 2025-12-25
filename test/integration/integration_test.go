@@ -50,10 +50,17 @@ func TestIntegration(t *testing.T) {
 			expectedStatusCode: http.StatusNotFound,
 		},
 		{
-			name:               "post an endpoint",
-			endpoint:           "/items",
-			method:             http.MethodPost,
-			expectedResponse:   `{"id":1,"name":"This is an item name"}`,
+			name:     "post an endpoint with a payload with variables",
+			endpoint: "/items",
+			method:   http.MethodPost,
+			payload: map[string]any{
+				"name":      "this name right here",
+				"age_years": 30,
+				"config": map[string]any{
+					"validated": true,
+				},
+			},
+			expectedResponse:   `{"id":1,"name":"this name right here", "age": 30, "validated": true}`,
 			expectedStatusCode: http.StatusOK,
 		},
 		{

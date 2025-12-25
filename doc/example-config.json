@@ -57,6 +57,16 @@
     "content": null
   },
   {
+    "path": "/orders",
+    "method": "POST",
+    "status": 201,
+    "content": {
+      "id": "{{ .id }}",
+      "name": "{{ .name }}",
+      "nested": "{{ .nested1.nested2.value }}"
+    }
+  },
+  {
     "path": "/orders/(?P<id>\\d+)",
     "method": "GET",
     "status": 200,

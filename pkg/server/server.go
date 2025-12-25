@@ -70,7 +70,13 @@ func (s Server) Start() error {
 }
 
 func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
-	request := route.NewRequestFromHTTPRequest(r)
+	request, err := route.NewRequestFromHTTPRequest(r)
+	if err != nil {
+		log.Error(fmt.Sprintf("failed to parse request: %s", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	requestedEndpoint, err := request.Endpoint(s.Endpoints)
 	if err != nil {
 		log.Error(fmt.Sprintf("requested %s but it failed: %s", request.String(), err.Error()))
