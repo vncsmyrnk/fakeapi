@@ -9,6 +9,7 @@ run *args:
 
 coverage:
   go test -coverprofile=coverage.txt ./...
+  @sed -i 's/^\(fakeapi\/\)/\1\1/g' coverage.txt
 
 generate:
   go generate ./...
@@ -20,5 +21,7 @@ build:
 install-linter:
   go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
-lint: install-linter
+lint: install-linter lint-only
+
+lint-only:
   golangci-lint run
