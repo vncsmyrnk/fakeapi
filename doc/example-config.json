@@ -11,7 +11,7 @@
     }
   },
   {
-    "path": "/item",
+    "path": "/items",
     "method": "GET",
     "status": 200,
     "content": [
@@ -48,6 +48,18 @@
     "method": "PUT",
     "status": 204,
     "delay_in_seconds": 4,
+    "content": null
+  },
+  {
+    "path": "/items",
+    "method": "POST",
+    "status": 204,
+    "content": null
+  },
+  {
+    "path": "/orders/(?P<id>\\d+)",
+    "method": "GET",
+    "status": 200,
     "content": null
   }
 ]

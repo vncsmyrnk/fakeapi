@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -21,17 +22,31 @@ func (r Request) String() string {
 
 func (r Request) Endpoint(endpoints []Endpoint) (*Endpoint, error) {
 	for _, endpoint := range endpoints {
-		matches, err := regexp.MatchString(
-			r.endpointInputPathForRegexpMatch(endpoint.InputPath), r.Path)
+		requestMatchesEndpoint, err := r.Matches(endpoint)
 		if err != nil {
+			log.Printf("endpoint %s has regexp syntax errors\n", endpoint.String())
 			continue
 		}
 
-		if matches {
+		if requestMatchesEndpoint {
 			return &endpoint, nil
 		}
 	}
 	return nil, fmt.Errorf("request did not match any endpoint")
+}
+
+func (r Request) Matches(endpoint Endpoint) (bool, error) {
+	pathMatches, err := regexp.MatchString(
+		r.endpointInputPathForRegexpMatch(endpoint.InputPath), r.Path)
+	if err != nil {
+		return false, err
+	}
+
+	if pathMatches && r.Method == endpoint.InputMethod {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (r Request) endpointInputPathForRegexpMatch(endpointInputPath string) string {

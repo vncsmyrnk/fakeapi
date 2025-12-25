@@ -63,7 +63,7 @@ func TestHandler(t *testing.T) {
 		method         string
 		path           string
 		expectedStatus int
-		expectedBody   route.Content
+		expectedBody   route.EndpointContent
 		expectedDelay  time.Duration
 		shouldBeFound  bool
 		bodyArray      bool

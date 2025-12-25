@@ -7,9 +7,11 @@ test:
 run *args:
   go run cmd/fakeapi/main.go {{args}}
 
+debug *args:
+  dlv debug --headless --listen=:2345 --api-version=2 cmd/fakeapi/main.go -- {{args}}
+
 coverage:
   go test -coverprofile=coverage.txt ./...
-  @sed -i 's/^\(fakeapi\/\)/\1\1/g' coverage.txt
 
 generate:
   go generate ./...

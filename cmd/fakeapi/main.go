@@ -36,6 +36,7 @@ func main() {
 	server := server.NewServer(
 		server.WithPort(cliArgs.Port),
 		server.WithEndpoints(endpoints),
+		server.WithEndpointsPossibleContentFilePath(cliArgs.PossibleContentFilePath),
 	)
 
 	err = server.Start()

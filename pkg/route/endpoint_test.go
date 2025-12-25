@@ -8,6 +8,143 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestEndpointContent(t *testing.T) {
+	testPossibleContent := `
+[
+	{
+		"paths": ["/orders", "/orders/(?P<id>\\d+)"],
+		"methods": ["GET"],
+		"data": [
+			{
+				"id": 1,
+				"type": "shirt",
+				"name": "cool shirt"
+			},
+			{
+				"id": 2,
+				"type": "shoe",
+				"name": "cool shoe"
+			},
+			{
+				"id": 3,
+				"type": "pants",
+				"name": "cool pants"
+			}
+		]
+	}
+]`
+	testPossibleContentFileName, removeTestFile := mockPossibleContentFile(t, "test-config.json", testPossibleContent)
+	defer removeTestFile()
+
+	brokenPossibleContent := `
+[
+	{
+		"paths": ["/orders", "/orders/(?P<id>\\d+)"],
+		"methods": ["GET"],
+]`
+	brokenPossibleContentFileName, removeBrokenFile := mockPossibleContentFile(t, "broken-config.json", brokenPossibleContent)
+	defer removeBrokenFile()
+
+	testCases := []struct {
+		name                    string
+		possibleContentFilePath string
+		request                 Request
+		endpoint                Endpoint
+		expectedEndpointContent EndpointContent
+		wantErr                 bool
+	}{
+		{
+			name: "endpoint has a content already defined",
+			endpoint: Endpoint{
+				InputPath:    "/orders",
+				InputMethod:  http.MethodGet,
+				OutputStatus: http.StatusOK,
+				OutputContent: map[string]any{
+					"price": float64(340),
+					"shipping": map[string]interface{}{
+						"method":       "plane",
+						"arrival-days": float64(3),
+					},
+				},
+			},
+			expectedEndpointContent: map[string]any{
+				"price": float64(340),
+				"shipping": map[string]interface{}{
+					"method":       "plane",
+					"arrival-days": float64(3),
+				},
+			},
+		},
+		{
+			name: "no possible content is found",
+			endpoint: Endpoint{
+				InputPath:    "/other-orders",
+				InputMethod:  http.MethodGet,
+				OutputStatus: http.StatusOK,
+			},
+		},
+		{
+			name:                    "possible content is found but the filtering does not return any data",
+			possibleContentFilePath: testPossibleContentFileName,
+			request: Request{
+				Path:   "/orders/99",
+				Method: http.MethodGet,
+			},
+			endpoint: Endpoint{
+				InputPath:    "/orders/(?P<id>\\d+)",
+				InputMethod:  http.MethodGet,
+				OutputStatus: http.StatusOK,
+			},
+			wantErr: true,
+		},
+		{
+			name:                    "possible content is found and data should be filtered",
+			possibleContentFilePath: testPossibleContentFileName,
+			request: Request{
+				Path:   "/orders/1",
+				Method: http.MethodGet,
+			},
+			endpoint: Endpoint{
+				InputPath:    "/orders/(?P<id>\\d+)",
+				InputMethod:  http.MethodGet,
+				OutputStatus: http.StatusOK,
+			},
+			expectedEndpointContent: map[string]any{
+				"id":   float64(1),
+				"type": "shirt",
+				"name": "cool shirt",
+			},
+		},
+		{
+			name:                    "possible content is broken",
+			possibleContentFilePath: brokenPossibleContentFileName,
+			request: Request{
+				Path:   "/orders/1",
+				Method: http.MethodGet,
+			},
+			endpoint: Endpoint{
+				InputPath:    "/orders/(?P<id>\\d+)",
+				InputMethod:  http.MethodGet,
+				OutputStatus: http.StatusOK,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := tc.endpoint.Content(tc.request, tc.possibleContentFilePath)
+			if tc.wantErr {
+				assert.Error(t, err)
+				assert.Empty(t, result)
+				return
+			}
+			assert.Equal(t, tc.expectedEndpointContent, result)
+			assert.Nil(t, err)
+		})
+	}
+}
+
 func TestNewEndpointsFromFile(t *testing.T) {
 	tmpFile, err := os.CreateTemp("", "test-config.json")
 	assert.NoError(t, err)
@@ -99,5 +236,22 @@ func TestNewEndpointsFromFile(t *testing.T) {
 			assert.Equal(t, tc.endpoints, endpoints)
 			assert.Nil(t, err)
 		})
+	}
+}
+
+func mockPossibleContentFile(t *testing.T, fileName, content string) (filePath string, removeFile func()) {
+	t.Helper()
+
+	tmpFile, err := os.CreateTemp("", fileName)
+	assert.NoError(t, err)
+
+	_, err = tmpFile.WriteString(content)
+	assert.NoError(t, err)
+
+	err = tmpFile.Close()
+	assert.NoError(t, err)
+
+	return tmpFile.Name(), func() {
+		os.Remove(tmpFile.Name())
 	}
 }

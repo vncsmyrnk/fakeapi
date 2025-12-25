@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	stdtime "time"
@@ -16,9 +17,10 @@ const defaultServerPort int16 = 8080
 
 // Server represents the components needed for a server to run
 type Server struct {
-	Port         int16
-	Endpoints    []route.Endpoint
-	TimeProvider customtime.Provider
+	Port                             int16
+	Endpoints                        []route.Endpoint
+	TimeProvider                     customtime.Provider
+	EndpointsPossibleContentFilePath string
 }
 
 // Option adds the capability of creating a server with options
@@ -54,6 +56,12 @@ func WithTimeProvider(timeProvider customtime.Provider) Option {
 	}
 }
 
+func WithEndpointsPossibleContentFilePath(filePath string) Option {
+	return func(s *Server) {
+		s.EndpointsPossibleContentFilePath = filePath
+	}
+}
+
 // Start spins up the Server.
 func (s Server) Start() error {
 	http.HandleFunc("/", s.serveHTTP)
@@ -76,13 +84,26 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	s.TimeProvider.Sleep(delayDuration)
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(requestedEndpoint.OutputStatus)
 
-	if requestedEndpoint.OutputContent == nil {
+	content, err := requestedEndpoint.Content(request, s.EndpointsPossibleContentFilePath)
+	if err != nil {
+		switch {
+		case errors.Is(err, route.ErrEndpointFilteredPossibleContentNotFound):
+			log.Error(fmt.Sprintf("requested %s but the regexp filtering returned no data: %s", request.String(), err.Error()))
+		default:
+			log.Error(fmt.Sprintf("requested %s but the content processing failed: %s", request.String(), err.Error()))
+		}
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(requestedEndpoint.OutputContent)
+	w.WriteHeader(requestedEndpoint.OutputStatus)
+
+	if content == nil {
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(content)
 	if err != nil {
 		log.Error(err)
 	}

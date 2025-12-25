@@ -11,14 +11,16 @@ import (
 var ErrNoParams = errors.New("no params were informed")
 
 type Args struct {
-	Help     bool
-	FilePath string
-	Port     int16
-	Version  bool
+	Help                    bool
+	FilePath                string
+	Port                    int16
+	PossibleContentFilePath string
+	Version                 bool
 }
 
 func NewArgs() (*Args, error) {
 	port := flag.Int("port", 8080, "Port to run the server on")
+	data := flag.String("data", "", "Extra content to served as content for endpoints")
 	help := flag.Bool("help", false, "Display this help section")
 	version := flag.Bool("version", false, "Display the app version")
 	flag.Parse()
@@ -40,6 +42,7 @@ func NewArgs() (*Args, error) {
 	filePath := params[0]
 	args.FilePath = filePath
 	args.Port = int16(*port)
+	args.PossibleContentFilePath = *data
 	return args, nil
 }
 
