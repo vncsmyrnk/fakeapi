@@ -14,7 +14,8 @@ generate:
   go generate ./...
 
 build:
-  go build ./cmd/fakeapi
+  @mkdir -p dist
+  go build -o dist/fakeapi ./cmd/fakeapi/main.go
 
 install-linter:
   go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
