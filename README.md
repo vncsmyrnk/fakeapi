@@ -40,6 +40,8 @@ curl -X POST localhost:8080/my-route
 # {"name":"value","other-name":{"some-other-name":"another-value"}}
 ```
 
+For other examples check [`test/integration/testdata`](test/integration/testdata) folder.
+
 ## Install
 
 ### Directly with Go
