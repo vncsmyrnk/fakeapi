@@ -43,6 +43,14 @@ func TestIntegration(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 		},
 		{
+			name:     "get an item with an unexistent id",
+			endpoint: "/items/9999",
+			method:   http.MethodGet,
+			expectedErrorResponse: `endpoint filtered possible content not found
+`,
+			expectedStatusCode: http.StatusNotFound,
+		},
+		{
 			name:     "get an undefined endpoint",
 			endpoint: "/all-items",
 			method:   http.MethodGet,

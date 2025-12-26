@@ -101,10 +101,11 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, route.ErrEndpointFilteredPossibleContentNotFound):
 			log.Error(fmt.Sprintf("requested %s but the regexp filtering returned no data: %s", request.String(), err.Error()))
+			http.Error(w, err.Error(), http.StatusNotFound)
 		default:
 			log.Error(fmt.Sprintf("requested %s but the content processing failed: %s", request.String(), err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
