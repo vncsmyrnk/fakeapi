@@ -7,6 +7,7 @@ import (
 	"fakeapi/internal/customtemplate"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"os"
 )
 
@@ -96,6 +97,7 @@ func (e Endpoint) applyTemplateWithRequestBody(
 		return nil, fmt.Errorf("failed to build template variables: %w", err)
 	}
 
+	e.applyTemplateSystemVariables(templateVariables)
 	return customtemplate.Execute(content, templateVariables)
 }
 
@@ -106,6 +108,12 @@ func (e Endpoint) requestBodyToTemplateVariables(request Request) (map[string]an
 	}
 
 	return templateVariables, nil
+}
+
+func (e Endpoint) applyTemplateSystemVariables(variables map[string]any) {
+	variables["System"] = map[string]any{
+		"random_int": rand.IntN(100),
+	}
 }
 
 func (e Endpoint) filterEnpointContentByRegexpNames(

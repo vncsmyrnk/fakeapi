@@ -10,10 +10,11 @@
     "method": "POST",
     "status": 200,
     "content": {
-      "id": 1,
+      "id": "{{ .System.random_int | raw }}",
       "name": "{{ .name }}",
       "validated": "{{ .config.validated | raw }}",
-      "age": "{{ .age_years | raw }}"
+      "age": "{{ .age_years | raw }}",
+      "type": "default"
     }
   },
   {

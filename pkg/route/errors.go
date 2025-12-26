@@ -7,4 +7,6 @@ var (
 		"endpoint filtered possible content not found")
 	ErrEndpointPossibleContentFileNotFound = fmt.Errorf(
 		"endpoint possible content file not found")
+	ErrEndpointNotFound = fmt.Errorf(
+		"endpoint not found")
 )

@@ -45,7 +45,7 @@ func (r Request) Endpoint(endpoints []Endpoint) (*Endpoint, error) {
 			return &endpoint, nil
 		}
 	}
-	return nil, fmt.Errorf("request did not match any endpoint")
+	return nil, ErrEndpointNotFound
 }
 
 func (r Request) Matches(endpoint Endpoint) (bool, error) {

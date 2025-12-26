@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"maps"
 	"net/http"
 	"path/filepath"
 	"testing"
@@ -30,7 +31,7 @@ func TestIntegration(t *testing.T) {
 		endpoint              string
 		method                string
 		payload               map[string]any
-		expectedResponse      string
+		expectedResponse      any
 		expectedErrorResponse string
 		expectedStatusCode    int
 	}{
@@ -45,7 +46,7 @@ func TestIntegration(t *testing.T) {
 			name:     "get an undefined endpoint",
 			endpoint: "/all-items",
 			method:   http.MethodGet,
-			expectedErrorResponse: `request did not match any endpoint
+			expectedErrorResponse: `endpoint not found
 `,
 			expectedStatusCode: http.StatusNotFound,
 		},
@@ -60,7 +61,29 @@ func TestIntegration(t *testing.T) {
 					"validated": true,
 				},
 			},
-			expectedResponse:   `{"id":1,"name":"this name right here", "age": 30, "validated": true}`,
+			expectedResponse: func(body []byte) bool {
+				var response map[string]any
+				if err := json.Unmarshal(body, &response); err != nil {
+					return false
+				}
+
+				id, ok := response["id"].(float64)
+				if !ok || id < 0 || id > 100 {
+					return false
+				}
+
+				pendingMapAssertions := response
+				pendingMapAssertions["id"] = 0
+
+				expectedPendingResponseAssertions := map[string]any{
+					"id":        0,
+					"name":      "this name right here",
+					"age":       float64(30),
+					"validated": true,
+					"type":      "default",
+				}
+				return maps.Equal(pendingMapAssertions, expectedPendingResponseAssertions)
+			},
 			expectedStatusCode: http.StatusOK,
 		},
 		{
@@ -97,13 +120,21 @@ func TestIntegration(t *testing.T) {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
+			strBody := string(body)
 			if tc.expectedErrorResponse != "" {
-				require.Equal(t, tc.expectedErrorResponse, string(body))
+				require.Equal(t, tc.expectedErrorResponse, strBody)
 			} else {
 				if tc.expectedResponse == "" {
 					assert.Empty(t, string(body))
 				} else {
-					assert.JSONEq(t, tc.expectedResponse, string(body))
+					switch v := tc.expectedResponse.(type) {
+					case string:
+						assert.JSONEq(t, v, strBody)
+					case func(body []byte) bool:
+						assert.True(t, v(body))
+					default:
+						t.Fatalf("no response comparison method provided")
+					}
 				}
 			}
 		})

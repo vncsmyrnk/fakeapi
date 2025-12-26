@@ -80,7 +80,12 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	requestedEndpoint, err := request.Endpoint(s.Endpoints)
 	if err != nil {
 		log.Error(fmt.Sprintf("requested %s but it failed: %s", request.String(), err.Error()))
-		http.Error(w, err.Error(), http.StatusNotFound)
+		switch {
+		case errors.Is(err, route.ErrEndpointNotFound):
+			http.Error(w, err.Error(), http.StatusNotFound)
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -99,7 +104,7 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			log.Error(fmt.Sprintf("requested %s but the content processing failed: %s", request.String(), err.Error()))
 		}
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
