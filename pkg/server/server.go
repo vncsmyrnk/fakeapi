@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	stdtime "time"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
 	"fakeapi/internal/customtime"
@@ -20,6 +23,7 @@ type Server struct {
 	Port                             int16
 	Endpoints                        []route.Endpoint
 	TimeProvider                     customtime.Provider
+	StatePath                        string
 	EndpointsPossibleContentFilePath string
 }
 
@@ -28,7 +32,10 @@ type Option func(*Server)
 
 // NewServer returns a runnable Server.
 func NewServer(opts ...Option) *Server {
-	s := &Server{Port: defaultServerPort, TimeProvider: customtime.RealProvider{}}
+	s := &Server{
+		Port:         defaultServerPort,
+		TimeProvider: customtime.RealProvider{},
+	}
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -62,6 +69,12 @@ func WithEndpointsPossibleContentFilePath(filePath string) Option {
 	}
 }
 
+func WithStatePath(statePath string) Option {
+	return func(s *Server) {
+		s.StatePath = statePath
+	}
+}
+
 // Start spins up the Server.
 func (s Server) Start() error {
 	http.HandleFunc("/", s.serveHTTP)
@@ -70,6 +83,11 @@ func (s Server) Start() error {
 }
 
 func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
+	if metaEndpointHandler := s.routeMetaEndpoints(r); metaEndpointHandler != nil {
+		metaEndpointHandler(w, r)
+		return
+	}
+
 	request, err := route.NewRequestFromHTTPRequest(r)
 	if err != nil {
 		log.Error(fmt.Sprintf("failed to parse request: %s", err.Error()))
@@ -109,6 +127,10 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := s.logHit(request); err != nil {
+		log.Error(fmt.Sprintf("failed to log request %s: %s", request.String(), err.Error()))
+	}
+
 	w.WriteHeader(requestedEndpoint.OutputStatus)
 
 	if content == nil {
@@ -119,4 +141,75 @@ func (s Server) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	}
+}
+
+func (s Server) routeMetaEndpoints(r *http.Request) func(http.ResponseWriter, *http.Request) {
+	metaEndpoint := r.Header.Get("x-fakeapi-control") == "meta"
+	if !metaEndpoint {
+		return nil
+	}
+
+	if r.Method == http.MethodGet && r.URL.Path == "/requestHits" {
+		return s.handleGetRequestHits
+	}
+
+	return nil
+}
+
+func (s Server) handleGetRequestHits(w http.ResponseWriter, _ *http.Request) {
+	requestHits, err := RequestHitsFromJSONFile(s.StatePath)
+	if err != nil {
+		log.Printf("failed to read request hits: %v", err)
+		return
+	}
+
+	response, err := json.Marshal(requestHits)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	_, err = w.Write(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (s Server) logHit(r route.Request) error {
+	hit, err := NewRequestHitFromRequest(r)
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(hit, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	requestHitFilePath, err := s.loggableRequestHitPath()
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(requestHitFilePath, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s Server) loggableRequestHitPath() (string, error) {
+	statePathAbsolutePath := filepath.Join(s.StatePath)
+	err := os.MkdirAll(statePathAbsolutePath, 0755)
+	if err != nil {
+		return "", fmt.Errorf("failed to ensure request hit path folder existed: %w", err)
+	}
+
+	requestHitFileName := func() string {
+		hitID := uuid.New()
+		currentTime := stdtime.Now()
+		return fmt.Sprintf("%d-%s.json", currentTime.Unix(), hitID.String()[:7])
+	}()
+
+	return filepath.Join(statePathAbsolutePath, requestHitFileName), nil
 }

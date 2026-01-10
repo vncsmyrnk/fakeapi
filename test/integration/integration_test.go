@@ -149,6 +149,92 @@ func TestIntegration(t *testing.T) {
 	}
 }
 
+func TestIntegrationRequestHits(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+
+	baseURL, terminateContainer := setupContainer(ctx, t)
+	defer terminateContainer()
+
+	req, err := http.NewRequest(http.MethodGet, baseURL+"/items/2", nil)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	reqHits, err := http.NewRequest(http.MethodGet, baseURL+"/requestHits", nil)
+	require.NoError(t, err)
+	reqHits.Header.Set("x-fakeapi-control", "meta")
+
+	respHits, err := http.DefaultClient.Do(reqHits)
+	require.NoError(t, err)
+	defer respHits.Body.Close()
+
+	assert.Equal(t, http.StatusOK, respHits.StatusCode)
+
+	var hits []map[string]any
+	err = json.NewDecoder(respHits.Body).Decode(&hits)
+	require.NoError(t, err)
+
+	assert.NotEmpty(t, hits)
+
+	found := false
+	for _, h := range hits {
+		if path, ok := h["path"].(string); ok && path == "/items/2" {
+			if method, ok := h["method"].(string); ok && method == "GET" {
+				found = true
+				break
+			}
+		}
+	}
+	assert.True(t, found, "Expected to find hit for GET /items/2")
+
+	bodyMap := map[string]any{"foo": "bar"}
+	bodyBytes, _ := json.Marshal(bodyMap)
+	reqPost, err := http.NewRequest(http.MethodPost, baseURL+"/orders", bytes.NewReader(bodyBytes))
+	require.NoError(t, err)
+	reqPost.Header.Set("Content-Type", "application/json")
+
+	respPost, err := http.DefaultClient.Do(reqPost)
+	require.NoError(t, err)
+	defer respPost.Body.Close()
+	assert.Equal(t, http.StatusOK, respPost.StatusCode)
+
+	reqHits2, err := http.NewRequest(http.MethodGet, baseURL+"/requestHits", nil)
+	require.NoError(t, err)
+	reqHits2.Header.Set("x-fakeapi-control", "meta")
+
+	respHits2, err := http.DefaultClient.Do(reqHits2)
+	require.NoError(t, err)
+	defer respHits2.Body.Close()
+
+	assert.Equal(t, http.StatusOK, respHits2.StatusCode)
+
+	var hits2 []map[string]any
+	err = json.NewDecoder(respHits2.Body).Decode(&hits2)
+	require.NoError(t, err)
+
+	foundPost := false
+	for _, h := range hits2 {
+		if path, ok := h["path"].(string); ok && path == "/orders" {
+			if method, ok := h["method"].(string); ok && method == "POST" {
+				if body, ok := h["body"].(map[string]any); ok {
+					if v, ok := body["foo"].(string); ok && v == "bar" {
+						foundPost = true
+						break
+					}
+				}
+			}
+		}
+	}
+	assert.True(t, foundPost, "Expected to find hit for POST /orders with body")
+}
+
 func setupContainer(ctx context.Context, t *testing.T) (containerURL string, terminateFunc func()) {
 	t.Helper()
 

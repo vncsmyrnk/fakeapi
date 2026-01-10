@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"fakeapi/internal/cli"
 	internallog "fakeapi/internal/log"
@@ -33,16 +35,31 @@ func main() {
 		log.Fatal(err)
 	}
 
+	statePath, err := getStatePath()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	server := server.NewServer(
 		server.WithPort(cliArgs.Port),
 		server.WithEndpoints(endpoints),
 		server.WithEndpointsPossibleContentFilePath(cliArgs.PossibleContentFilePath),
+		server.WithStatePath(statePath),
 	)
 
 	err = server.Start()
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getStatePath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(home, ".local", "state", "fakeapi"), nil
 }
 
 func handleCLIErrors(err error) {
