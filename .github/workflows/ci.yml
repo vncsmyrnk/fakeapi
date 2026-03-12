@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 jobs:
-  ci:
+  ci-go:
     runs-on: ubuntu-latest
     container: golang:1.25-alpine
     steps:
@@ -22,42 +22,18 @@ jobs:
       - name: Lint
         run: just lint
 
-      - name: Run unit tests
-        run: just unit-test
-
-      - name: Run integration tests
-        run: just integration-test
-
-      - name: Runs test coverage
-        run: just coverage
-
-      - name: upload coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.txt
-
-  codecov:
+  ci-nix:
     runs-on: ubuntu-latest
-    needs: ci
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: download ci artifacts
-        id: download-build-artifact
-        uses: actions/download-artifact@v7
+      - uses: cachix/install-nix-action@v31
         with:
-          name: coverage
-          path: .
+          nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: list artifacts
-        run: ls -lh .
+      - name: Check flake
+        run: nix flake check
 
-      - name: upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: vncsmyrnk/fakeapi
-          files: coverage.txt
-          fail_ci_if_error: true
+      - name: Build flake
+        run: nix build

@@ -1,6 +1,5 @@
 [![CI workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml)
 [![Release workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml)
-[![codecov](https://codecov.io/gh/vncsmyrnk/fakeapi/graph/badge.svg?token=OHOKF0SD8T)](https://codecov.io/gh/vncsmyrnk/fakeapi)
 [![contributions](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/vncsmyrnk/fakeapi/issues)
 [![Issue count](https://img.shields.io/github/issues-search?query=repo%3Avncsmyrnk%2Ffakeapi%20is%3Aopen&label=open%20issues)](https://github.com/vncsmyrnk/fakeapi/issues)
 
@@ -20,9 +19,9 @@ It is useful not only for building frontend interfaces but also whenever you nee
 cat <<EOF > server-config.json
 [
   {
-    "path": "/my-route",
+    "uri": "/my-route",
     "method": "POST",
-    "status": 200,
+    "statusCode": 200,
     "content": {
       "name": "value",
       "other-name": {
@@ -30,7 +29,6 @@ cat <<EOF > server-config.json
       }
     }
   }
-]
 EOF
 fakeapi --port 8080 server-config.json
 ```
@@ -40,33 +38,36 @@ curl -X POST localhost:8080/my-route
 # {"name":"value","other-name":{"some-other-name":"another-value"}}
 ```
 
-For other examples check [`test/integration/testdata`](test/integration/testdata) folder.
+## Assertions
+
+All requests sent to the fake API are stored locally and can be queried later for assertions. This is useful for verifying that the expected requests were made to the API during automated tests.
+
+The `fakeassert` CLI checks whether a specific request was received by the server. It returns a zero exit code on success and a non-zero exit code on failure.
+
+```sh
+fakeassert --port 8080 POST /my-route
+# Exit code 0: a POST request to /my-route was received
+# Exit code 1: no matching request was found
+```
 
 ## Install
 
-### Directly with Go
+### Server
 
 ```sh
-go install github.com/vncsmyrnk/fakeapi@latest
+nix profile add github:vncsmyrnk/fakeapi#server
 ```
-
-### Manually
-
-Check the [releases section](https://github.com/vncsmyrnk/fakeapi/releases) for the binaries.
-
-Example:
 
 ```sh
-curl -L https://github.com/vncsmyrnk/fakeapi/releases/latest/download/fakeapi-linux-amd64 -o fakeapi # Download the correct binary according to your settings
-mv fakeapi ~/.local/bin # Move it to an executable path
+docker run --rm -it -p 8080:8080 vncsmyrnk/fakeapi
 ```
 
-## Development
-
-This project is still in development. Feel free to open a issue or a PR!
-
-To run tests:
+### CLI
 
 ```sh
-just test
+nix profile install github:vncsmyrnk/fakeapi#cli
 ```
+
+## Roadmap and new features
+
+Check the [milestones section](https://github.com/vncsmyrnk/fakeapi/milestones) to see what is currently being planned or in development.

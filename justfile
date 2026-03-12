@@ -17,6 +17,9 @@ build-server:
   @mkdir -p dist
   go build -o dist/fakeapi ./cmd/server/main.go
 
+docker-build:
+  nix build .#docker
+
 install-linter:
   go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
