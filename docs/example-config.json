@@ -1,0 +1,34 @@
+[
+  {
+    "uri": "/items/(?P<id>\\d+)",
+    "method": "GET",
+    "statusCode": 200,
+    "content": {
+      "id": 1
+    }
+  },
+  {
+    "uri": "/items/empty",
+    "method": "PUT",
+    "statusCode": 204
+  },
+  {
+    "uri": "/items",
+    "method": "POST",
+    "statusCode": 204,
+    "content": null
+  },
+  {
+    "uri": "/items",
+    "method": "GET",
+    "statusCode": 200,
+    "content": [
+      {
+        "id": 1
+      },
+      {
+        "id": 2
+      }
+    ]
+  }
+]

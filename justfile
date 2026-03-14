@@ -1,29 +1,21 @@
 default:
   just --list
 
-test: unit-test integration-test
+run-server *args:
+  go run cmd/server/main.go {{args}}
 
-unit-test:
-  go test -cover $(go list ./... | grep -v \/integration)
-
-integration-test:
-  go test -v ./test/integration/...
-
-run *args:
-  go run cmd/fakeapi/main.go {{args}}
+run-cli *args:
+  go run cmd/cli/main.go {{args}}
 
 debug *args:
-  dlv debug --headless --listen=:2345 --api-version=2 cmd/fakeapi/main.go -- {{args}}
-
-coverage:
-  go test -coverprofile=coverage.txt $(go list ./... | grep -v \/integration)
+  dlv debug --headless --listen=:2345 --api-version=2 cmd/server/main.go -- {{args}}
 
 generate:
   go generate ./...
 
-build:
+build-server:
   @mkdir -p dist
-  go build -o dist/fakeapi ./cmd/fakeapi/main.go
+  go build -o dist/fakeapi ./cmd/server/main.go
 
 install-linter:
   go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
