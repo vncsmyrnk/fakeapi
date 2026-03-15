@@ -29,6 +29,7 @@ cat <<EOF > server-config.json
       }
     }
   }
+]
 EOF
 fakeapi --port 8080 server-config.json
 ```
