@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
+	flag "github.com/spf13/pflag"
 
 	"fakeapi/internal/domain"
 	apiHTTP "fakeapi/internal/handler/http"
@@ -48,6 +48,26 @@ func overrideEndpointsWithFile(ctx context.Context, svc port.EndpointService, fi
 }
 
 func main() {
+	port := flag.IntP("port", "p", 8080, "Port to run the server on")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Run a Fake API HTTP server\n\n")
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "  fakeapi [file] [flags]\n\n")
+
+		fmt.Fprintf(os.Stderr, "Examples:\n")
+		fmt.Fprintf(os.Stderr, "  fakeapi -p 8080 docs/example-config.json\n\n")
+
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+
+	args := flag.Args()
+	var endpointsFilePath string
+	if flag.NArg() >= 1 {
+		endpointsFilePath = args[0]
+	}
+
 	dbPath := os.Getenv("FAKEAPI_DB_PATH")
 	if dbPath == "" {
 		dbPath = "./file.db"
@@ -75,23 +95,15 @@ func main() {
 	reqRepo := sqlite.NewRequestRepository(db)
 	reqSvc := service.NewRequestService(reqRepo)
 
-	ctx := context.Background()
+	metaHandler := apiHTTP.NewMetaHandler(endSvc, reqSvc)
+	mainHandler := apiHTTP.NewMainHandler(endSvc, reqSvc, metaHandler)
 
-	args := os.Args
-	var endpointsFilePath string
-	if len(args) >= 2 {
-		endpointsFilePath = args[1]
-		err := overrideEndpointsWithFile(ctx, endSvc, endpointsFilePath)
+	if endpointsFilePath != "" {
+		err := overrideEndpointsWithFile(context.Background(), endSvc, endpointsFilePath)
 		if err != nil {
 			log.Errorf("Failed to override endpoints from file: %v", err)
 		}
 	}
-
-	metaHandler := apiHTTP.NewMetaHandler(endSvc, reqSvc)
-	mainHandler := apiHTTP.NewMainHandler(endSvc, reqSvc, metaHandler)
-
-	port := flag.Int("port", 8080, "Port to run the server on")
-	flag.Parse()
 
 	fmt.Printf("Running HTTP server on port %d\n", *port)
 	http.HandleFunc("/", mainHandler)
