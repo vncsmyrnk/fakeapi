@@ -131,6 +131,12 @@ func assertRequest(
 
 	succeededAssertions = append(succeededHeaderAssertions, succeededBodyAssertions...)
 	failedAssertions = append(failedHeaderAssertions, failedBodyAssertions...)
+
+	if len(succeededAssertions) == 0 && len(failedAssertions) == 0 {
+		succeededAssertions = append(succeededAssertions,
+			fmt.Sprintf("✅ Method and URI matches (%s %s)", r.Method, r.URI))
+	}
+
 	return true, succeededAssertions, failedAssertions
 }
 
