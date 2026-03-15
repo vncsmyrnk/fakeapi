@@ -29,15 +29,32 @@ type assertionExpectedValues struct {
 }
 
 func main() {
-	port := flag.Int("port", 8080, "Port the target server is running on")
-	quiet := flag.Bool("q", false, "Quiet mode")
+	port := flag.IntP("port", "p", 8080, "Port the target server is running on")
+	quiet := flag.BoolP("quiet", "q", false, "Quiet mode")
 
 	var (
 		headers, attrs []string
 	)
 	flag.StringArrayVarP(&headers, "header", "H", []string{}, "Expected headers in 'Key: Value' format")
 	flag.StringArrayVarP(&attrs, "body-attributes", "b", []string{}, "Expected body attributes in 'key=value' format")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Assert Fake API requests\n\n")
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "  fakeassert <method> <uri> [flags]\n\n")
+
+		fmt.Fprintf(os.Stderr, "Examples:\n")
+		fmt.Fprintf(os.Stderr, "  fakeassert POST /items -H 'user-agent:curl' -a 'status=active'\n\n")
+
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
+	if flag.NArg() < 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	url := requestURL(serverBaseURL, *port)
 	requests, err := getRequests(url)
@@ -45,14 +62,10 @@ func main() {
 		log.Fatalf("failed to fetch requests: %v", err)
 	}
 
-	args := flag.Args()
-	if len(args) < 2 {
-		log.Fatal("missing arguments")
-	}
-
 	expectedHeaders := headersParsed(headers)
 	expectedBodyAttrs := attributesParsed(attrs)
 
+	args := flag.Args()
 	method := args[0]
 	uri := args[1]
 
