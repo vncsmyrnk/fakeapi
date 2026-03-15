@@ -102,8 +102,8 @@
     in
     {
       packages.${system} = {
-        default = cli;
-        cli = cli;
+        default = server;
+        assert-cli = cli;
         docker = serverDockerImage;
         server = server;
 

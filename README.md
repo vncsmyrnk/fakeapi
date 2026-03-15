@@ -56,17 +56,17 @@ fakeassert --port 8080 POST /my-route
 ### Server
 
 ```sh
-nix profile add github:vncsmyrnk/fakeapi#server
+nix profile add github:vncsmyrnk/fakeapi
 ```
 
 ```sh
 docker run --rm -it -p 8080:8080 vncsmyrnk/fakeapi
 ```
 
-### CLI
+### Assertions CLI
 
 ```sh
-nix profile install github:vncsmyrnk/fakeapi#cli
+nix profile add github:vncsmyrnk/fakeapi#assert-cli --name fakeassert
 ```
 
 ## Roadmap and new features
