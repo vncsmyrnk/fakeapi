@@ -85,7 +85,7 @@ VALUES (:endpoint_id, :uri, :hit_time, :user_agent, :request_headers, :request_b
 
 func (r *requestRepository) FetchAll(ctx context.Context) ([]domain.Request, error) {
 	query := `
-SELECT 
+SELECT
 	r.id, r.endpoint_id, r.uri, e.method, r.hit_time, r.user_agent, r.request_headers, r.request_body 
 FROM requests r
 JOIN endpoints e ON r.endpoint_id = e.id

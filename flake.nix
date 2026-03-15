@@ -1,5 +1,5 @@
 {
-  description = "Fully customizable local REST API for testing";
+  description = "Customizable local REST API for testing";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -31,7 +31,7 @@
         name = "fakeapi";
         src = src;
         version = serverVersion;
-        vendorHash = "sha256-N+GkWyXtuqVA74LKdHt5i/R4sv2Hyl9JbGL6x2Ah27w=";
+        vendorHash = "sha256-AfsFzCWJYBtji9yTHDmmOjxo2vdPGnAasRzwbXLlgCc=";
         doCheck = false;
         subPackages = [
           "cmd/server"
@@ -53,7 +53,7 @@
         name = "fakeassert";
         src = src;
         version = cliVersion;
-        vendorHash = "sha256-N+GkWyXtuqVA74LKdHt5i/R4sv2Hyl9JbGL6x2Ah27w=";
+        vendorHash = "sha256-AfsFzCWJYBtji9yTHDmmOjxo2vdPGnAasRzwbXLlgCc=";
         doCheck = false;
         subPackages = [
           "cmd/cli"

@@ -28,26 +28,6 @@ func NewRequestService(repo port.RequestRepository) port.RequestService {
 }
 
 func (s *requestService) Create(ctx context.Context, endpointID int, r *http.Request) error {
-	var headers *string
-	if len(r.Header) > 0 {
-		headersJSON, err := json.Marshal(r.Header)
-		if err == nil {
-			h := string(headersJSON)
-			headers = &h
-		}
-	}
-
-	var body *string
-	if r.Body != nil {
-		bodyBytes, err := io.ReadAll(r.Body)
-		if err == nil && len(bodyBytes) > 0 {
-			// Restore the body for further reading if needed downstream
-			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			b := string(bodyBytes)
-			body = &b
-		}
-	}
-
 	var userAgent *string
 	if ua := r.UserAgent(); ua != "" {
 		userAgent = &ua
@@ -58,8 +38,8 @@ func (s *requestService) Create(ctx context.Context, endpointID int, r *http.Req
 		URI:            r.URL.Path,
 		HitTime:        time.Now(),
 		UserAgent:      userAgent,
-		RequestHeaders: headers,
-		RequestBody:    body,
+		RequestHeaders: s.jsonStringHeaders(r),
+		RequestBody:    s.jsonStringBody(r),
 	}
 
 	_, err := s.repo.Create(ctx, req)
@@ -84,4 +64,34 @@ func (s *requestService) DeleteAll(ctx context.Context) error {
 		return fmt.Errorf("failed to delete all requests: %w", err)
 	}
 	return nil
+}
+
+func (s *requestService) jsonStringHeaders(r *http.Request) *string {
+	var headers *string
+	if len(r.Header) > 0 {
+		flatHeaders := make(map[string]string, len(r.Header))
+		for k := range r.Header {
+			flatHeaders[k] = r.Header.Get(k)
+		}
+		headersJSON, err := json.Marshal(flatHeaders)
+		if err == nil {
+			h := string(headersJSON)
+			headers = &h
+		}
+	}
+	return headers
+}
+
+func (s *requestService) jsonStringBody(r *http.Request) *string {
+	var body *string
+	if r.Body != nil {
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err == nil && len(bodyBytes) > 0 {
+			// Restore the body for further reading if needed downstream
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+			b := string(bodyBytes)
+			body = &b
+		}
+	}
+	return body
 }
