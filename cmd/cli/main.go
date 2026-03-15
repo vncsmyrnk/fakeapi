@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,9 +19,14 @@ import (
 )
 
 const (
-	serverBaseURL  = "http://localhost"
-	getRequestsURI = "/requests"
+	serverBaseURL     = "http://localhost"
+	getRequestsURI    = "/requests?pending=true"
+	postAssertionsURI = "/assertions"
 )
+
+var client = &http.Client{
+	Timeout: 10 * time.Second,
+}
 
 type assertionExpectedValues struct {
 	Method         string
@@ -82,7 +88,7 @@ func main() {
 
 	var (
 		succeededAssertions, failedAssertions []string
-		matchCount                            int
+		matchedRequestIDs                     []int
 	)
 	for _, r := range requests {
 		match, s, f := assertRequest(r, assertion)
@@ -90,23 +96,29 @@ func main() {
 			succeededAssertions = append(succeededAssertions, s...)
 			failedAssertions = append(failedAssertions, f...)
 			if len(f) == 0 {
-				matchCount++
+				matchedRequestIDs = append(matchedRequestIDs, r.ID)
 			}
 		}
 	}
 
-	if matchCount >= 1 {
+	if len(matchedRequestIDs) >= 1 {
 		failedAssertions = []string{}
 	}
 
-	if matchCount != assertion.Occurrences {
+	if len(matchedRequestIDs) != assertion.Occurrences {
 		failedAssertions = append(failedAssertions,
 			fmt.Sprintf("❌ Occurence count mismatch: expected %d, got %d",
-				assertion.Occurrences, matchCount))
+				assertion.Occurrences, len(matchedRequestIDs)))
+		matchedRequestIDs = []int{}
 	}
 
 	p := quietAwarePrintLnGenerator(*quiet)
 	showAssertions(p, succeededAssertions, failedAssertions)
+
+	err = postAssertedRequestIDs(url, matchedRequestIDs)
+	if err != nil {
+		log.Warnf("failed to assert request IDs: %v", err)
+	}
 
 	if len(failedAssertions) > 0 {
 		os.Exit(1)
@@ -217,10 +229,6 @@ func getRequests(url string) ([]apiHTTP.RequestResponse, error) {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-FakeAPI-Control", "meta")
 
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -239,6 +247,33 @@ func getRequests(url string) ([]apiHTTP.RequestResponse, error) {
 	}
 
 	return requests, nil
+}
+
+func postAssertedRequestIDs(url string, ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	d, _ := json.Marshal(ids)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", url, postAssertionsURI), bytes.NewBuffer(d))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-FakeAPI-Control", "meta")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		return nil
+	}
+
+	return fmt.Errorf("failed to request assertions")
 }
 
 func headersParsed(headers []string) map[string]string {

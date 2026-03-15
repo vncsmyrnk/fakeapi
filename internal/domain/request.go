@@ -10,6 +10,7 @@ type Request struct {
 	EndpointID     int
 	URI            string
 	Method         string
+	Asserted       bool
 	HitTime        time.Time
 	UserAgent      *string
 	RequestHeaders *string

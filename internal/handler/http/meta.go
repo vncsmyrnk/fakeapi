@@ -16,17 +16,19 @@ import (
 type metaHandlerFunc func(s metaServices, w http.ResponseWriter, r *http.Request)
 
 type metaServices struct {
-	endpointService port.EndpointService
-	requestService  port.RequestService
+	endpointService  port.EndpointService
+	requestService   port.RequestService
+	assertionService port.AssertionService
 }
 
 // NewMetaHandler returns a router for the meta endpoints used to control the fake API.
-func NewMetaHandler(endSvc port.EndpointService, reqSvc port.RequestService) http.Handler {
+func NewMetaHandler(endSvc port.EndpointService, reqSvc port.RequestService, assSvc port.AssertionService) http.Handler {
 	r := chi.NewRouter()
 
 	s := metaServices{
-		endpointService: endSvc,
-		requestService:  reqSvc,
+		endpointService:  endSvc,
+		requestService:   reqSvc,
+		assertionService: assSvc,
 	}
 
 	getEndpointsHandler := handleRequest(s, handleGetEndpoints)
@@ -34,6 +36,7 @@ func NewMetaHandler(endSvc port.EndpointService, reqSvc port.RequestService) htt
 	postEndpointsHandler := handleRequest(s, handlePostEndpoint)
 	getRequestsHandler := handleRequest(s, handleGetRequests)
 	deleteRequestsHandler := handleRequest(s, handleDeleteRequests)
+	postAssertionsHandler := handleRequest(s, handlePostAssertions)
 
 	r.Route("/endpoints", func(r chi.Router) {
 		r.Get("/", getEndpointsHandler)
@@ -44,6 +47,10 @@ func NewMetaHandler(endSvc port.EndpointService, reqSvc port.RequestService) htt
 	r.Route("/requests", func(r chi.Router) {
 		r.Get("/", getRequestsHandler)
 		r.Delete("/", deleteRequestsHandler)
+	})
+
+	r.Route("/assertions", func(r chi.Router) {
+		r.Post("/", postAssertionsHandler)
 	})
 
 	return r
@@ -134,6 +141,12 @@ func handlePostEndpoint(s metaServices, w http.ResponseWriter, r *http.Request) 
 }
 
 func handleGetRequests(s metaServices, w http.ResponseWriter, r *http.Request) {
+	var pending bool
+	p := r.URL.Query().Get("pending")
+	if p == "1" || p == "true" {
+		pending = true
+	}
+
 	requests, err := s.requestService.FetchAll(r.Context())
 	if err != nil {
 		log.Errorf("failed to fetch requests: %v", err)
@@ -143,7 +156,9 @@ func handleGetRequests(s metaServices, w http.ResponseWriter, r *http.Request) {
 
 	var response []RequestResponse
 	for _, req := range requests {
-		response = append(response, newRequestResponse(req))
+		if !pending || !req.Asserted {
+			response = append(response, newRequestResponse(req))
+		}
 	}
 
 	err = json.NewEncoder(w).Encode(response)
@@ -158,6 +173,25 @@ func handleDeleteRequests(s metaServices, w http.ResponseWriter, r *http.Request
 	if err != nil {
 		log.Errorf("failed to delete requests: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func handlePostAssertions(s metaServices, w http.ResponseWriter, r *http.Request) {
+	var req assertionRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		log.Errorf("failed to decode body: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = s.assertionService.Create(r.Context(), req)
+	if err != nil {
+		log.Errorf("failed to create assertions: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

@@ -95,7 +95,10 @@ func main() {
 	reqRepo := sqlite.NewRequestRepository(db)
 	reqSvc := service.NewRequestService(reqRepo)
 
-	metaHandler := apiHTTP.NewMetaHandler(endSvc, reqSvc)
+	assRepo := sqlite.NewAssertionRepository(db)
+	assSvc := service.NewAssertionService(assRepo)
+
+	metaHandler := apiHTTP.NewMetaHandler(endSvc, reqSvc, assSvc)
 	mainHandler := apiHTTP.NewMainHandler(endSvc, reqSvc, metaHandler)
 
 	if endpointsFilePath != "" {

@@ -17,6 +17,7 @@ type request struct {
 	EndpointID     int       `db:"endpoint_id"`
 	URI            string    `db:"uri"`
 	Method         string    `db:"method"`
+	Asserted       bool      `db:"asserted"`
 	HitTime        time.Time `db:"hit_time"`
 	UserAgent      *string   `db:"user_agent"`
 	RequestHeaders *string   `db:"request_headers"`
@@ -29,6 +30,7 @@ func toDomainRequest(r request) domain.Request {
 		EndpointID:     r.EndpointID,
 		URI:            r.URI,
 		Method:         r.Method,
+		Asserted:       r.Asserted,
 		HitTime:        r.HitTime,
 		UserAgent:      r.UserAgent,
 		RequestHeaders: r.RequestHeaders,
@@ -86,8 +88,14 @@ VALUES (:endpoint_id, :uri, :hit_time, :user_agent, :request_headers, :request_b
 func (r *requestRepository) FetchAll(ctx context.Context) ([]domain.Request, error) {
 	query := `
 SELECT
-	r.id, r.endpoint_id, r.uri, e.method, r.hit_time, r.user_agent, r.request_headers, r.request_body 
+  r.id, r.endpoint_id, r.uri, e.method,
+  CASE
+    WHEN a.id is not null THEN true
+    ELSE false
+  END asserted,
+  r.hit_time, r.user_agent, r.request_headers, r.request_body 
 FROM requests r
+left join assertions a on a.request_id = r.id
 JOIN endpoints e ON r.endpoint_id = e.id
 ORDER BY r.hit_time DESC;`
 

@@ -23,3 +23,12 @@ CREATE TABLE IF NOT EXISTS requests (
     CHECK (request_headers IS NULL OR json_valid(request_headers))
     CHECK (request_body IS NULL OR json_valid(request_body))
 );
+
+CREATE TABLE IF NOT EXISTS assertions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL,
+    assert_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+    UNIQUE(request_id)
+);

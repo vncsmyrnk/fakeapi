@@ -97,3 +97,5 @@ func newRequestResponse(r domain.Request) RequestResponse {
 		RequestBody:    body,
 	}
 }
+
+type assertionRequest []int
