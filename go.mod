@@ -10,10 +10,12 @@ require (
 )
 
 require (
+	github.com/samber/lo v1.53.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 )

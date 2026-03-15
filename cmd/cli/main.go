@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/tidwall/gjson"
@@ -26,6 +27,7 @@ type assertionExpectedValues struct {
 	URI            string
 	Headers        map[string]string
 	BodyAttributes map[string]string
+	Occurrences    int
 }
 
 func main() {
@@ -37,6 +39,7 @@ func main() {
 	)
 	flag.StringArrayVarP(&headers, "header", "H", []string{}, "Expected headers in 'Key: Value' format")
 	flag.StringArrayVarP(&attrs, "body-attributes", "b", []string{}, "Expected body attributes in 'key=value' format")
+	occurences := flag.IntP("occurrences", "c", 1, "Match occurrence count")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Assert Fake API requests\n\n")
@@ -69,22 +72,37 @@ func main() {
 	method := args[0]
 	uri := args[1]
 
+	assertion := assertionExpectedValues{
+		Method:         method,
+		URI:            uri,
+		Headers:        expectedHeaders,
+		BodyAttributes: expectedBodyAttrs,
+		Occurrences:    *occurences,
+	}
+
 	var (
-		match                                 bool
 		succeededAssertions, failedAssertions []string
+		matchCount                            int
 	)
 	for _, r := range requests {
-		match, succeededAssertions, failedAssertions =
-			assertRequest(r, assertionExpectedValues{
-				Method:         method,
-				URI:            uri,
-				Headers:        expectedHeaders,
-				BodyAttributes: expectedBodyAttrs,
-			})
-
+		match, s, f := assertRequest(r, assertion)
 		if match {
-			break
+			succeededAssertions = append(succeededAssertions, s...)
+			failedAssertions = append(failedAssertions, f...)
+			if len(f) == 0 {
+				matchCount++
+			}
 		}
+	}
+
+	if matchCount >= 1 {
+		failedAssertions = []string{}
+	}
+
+	if matchCount != assertion.Occurrences {
+		failedAssertions = append(failedAssertions,
+			fmt.Sprintf("❌ Occurence count mismatch: expected %d, got %d",
+				assertion.Occurrences, matchCount))
 	}
 
 	p := quietAwarePrintLnGenerator(*quiet)
@@ -249,21 +267,23 @@ func showAssertions(printLn func(args ...any), succeededAssertions, failedAssert
 		return
 	}
 
-	for _, s := range succeededAssertions {
-		printLn(s)
+	s := lo.Uniq(succeededAssertions)
+	f := lo.Uniq(failedAssertions)
+	for _, assertionText := range s {
+		printLn(assertionText)
 	}
 
-	if len(succeededAssertions) > 0 {
+	if len(s) > 0 {
 		printLn()
 	}
 
-	if len(failedAssertions) > 0 {
+	if len(f) > 0 {
 		printLn("--- Assertion failures ---")
-		for _, f := range failedAssertions {
-			printLn(f)
+		for _, assertionText := range f {
+			printLn(assertionText)
 		}
 
-		if len(succeededAssertions) == 0 {
+		if len(s) == 0 {
 			printLn("\n❌ All assertions failed")
 		}
 		return

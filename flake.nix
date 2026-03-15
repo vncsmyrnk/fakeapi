@@ -31,7 +31,7 @@
         name = "fakeapi";
         src = src;
         version = serverVersion;
-        vendorHash = "sha256-AfsFzCWJYBtji9yTHDmmOjxo2vdPGnAasRzwbXLlgCc=";
+        vendorHash = "sha256-V1CsWQ1qgDI0w7vBcR9xKnS9kjuED+MIEM320s5W1iI=";
         doCheck = false;
         subPackages = [
           "cmd/server"
@@ -53,7 +53,7 @@
         name = "fakeassert";
         src = src;
         version = cliVersion;
-        vendorHash = "sha256-AfsFzCWJYBtji9yTHDmmOjxo2vdPGnAasRzwbXLlgCc=";
+        vendorHash = "sha256-V1CsWQ1qgDI0w7vBcR9xKnS9kjuED+MIEM320s5W1iI=";
         doCheck = false;
         subPackages = [
           "cmd/cli"
