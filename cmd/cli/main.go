@@ -45,7 +45,7 @@ func main() {
 	)
 	flag.StringArrayVarP(&headers, "header", "H", []string{}, "Expected headers in 'Key: Value' format")
 	flag.StringArrayVarP(&attrs, "body-attributes", "b", []string{}, "Expected body attributes in 'key=value' format")
-	occurences := flag.IntP("occurrences", "c", 1, "Match occurrence count")
+	occurences := flag.IntP("occurrences", "c", -1, "Match occurrence count")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Assert Fake API requests\n\n")
@@ -60,9 +60,18 @@ func main() {
 	}
 
 	flag.Parse()
-	if flag.NArg() < 1 {
+	if flag.NArg() == 1 || flag.NArg() > 2 {
 		flag.Usage()
 		os.Exit(1)
+	}
+
+	if flag.NArg() == 0 && *occurences == -1 {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	if *occurences == -1 {
+		occurences = &[]int{1}[0]
 	}
 
 	url := requestURL(serverBaseURL, *port)
@@ -74,9 +83,12 @@ func main() {
 	expectedHeaders := headersParsed(headers)
 	expectedBodyAttrs := attributesParsed(attrs)
 
+	var method, uri string
 	args := flag.Args()
-	method := args[0]
-	uri := args[1]
+	if len(args) >= 2 {
+		method = args[0]
+		uri = args[1]
+	}
 
 	assertion := assertionExpectedValues{
 		Method:         method,
@@ -101,15 +113,28 @@ func main() {
 		}
 	}
 
-	if len(matchedRequestIDs) >= 1 {
+	matchedRequestIDsCount := len(matchedRequestIDs)
+	if matchedRequestIDsCount >= 1 {
 		failedAssertions = []string{}
 	}
 
-	if len(matchedRequestIDs) != assertion.Occurrences {
+	actualRequestCountMatchesAssertion := matchedRequestIDsCount == assertion.Occurrences
+	noPendingRequests := matchedRequestIDsCount == 0 && len(succeededAssertions) == 0
+	if matchedRequestIDsCount == assertion.Occurrences || (noPendingRequests && assertion.Occurrences == 0) {
+		actualRequestCountMatchesAssertion = true
+	}
+
+	if !actualRequestCountMatchesAssertion {
 		failedAssertions = append(failedAssertions,
 			fmt.Sprintf("❌ Occurence count mismatch: expected %d, got %d",
 				assertion.Occurrences, len(matchedRequestIDs)))
 		matchedRequestIDs = []int{}
+	} else if noPendingRequests {
+		m := fmt.Sprintf("✅ There are still %d pending assertions", matchedRequestIDsCount)
+		if matchedRequestIDsCount == 0 {
+			m = "✅ There are no pending assertions"
+		}
+		succeededAssertions = []string{m}
 	}
 
 	p := quietAwarePrintLnGenerator(*quiet)
@@ -129,7 +154,14 @@ func assertRequest(
 	r apiHTTP.RequestResponse,
 	a assertionExpectedValues,
 ) (match bool, succeededAssertions, failedAssertions []string) {
-	if r.Method != a.Method || r.URI != a.URI {
+	emptyMethodAndURI := a.Method == "" && a.URI == ""
+	if emptyMethodAndURI {
+		return true, succeededAssertions, failedAssertions
+	}
+
+	requestAndExpectedMethodURIMatch := r.Method == a.Method &&
+		r.URI == a.URI
+	if !requestAndExpectedMethodURIMatch {
 		return
 	}
 
