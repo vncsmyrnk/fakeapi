@@ -11,7 +11,7 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       serverVersion = "0.4.0";
-      cliVersion = "0.3.0";
+      cliVersion = "0.4.0";
 
       src = pkgs.lib.cleanSourceWith {
         src = ./.;
@@ -33,6 +33,7 @@
         version = serverVersion;
         vendorHash = "sha256-V1CsWQ1qgDI0w7vBcR9xKnS9kjuED+MIEM320s5W1iI=";
         doCheck = false;
+
         subPackages = [
           "cmd/server"
         ];
@@ -43,6 +44,12 @@
         env = {
           CGO_ENABLED = 1;
         };
+
+        ldflags = [
+          "-s"
+          "-w"
+          "-X main.ServerVersion=${serverVersion}"
+        ];
 
         postInstall = ''
           mv $out/bin/server $out/bin/fakeapi
@@ -55,8 +62,15 @@
         version = cliVersion;
         vendorHash = "sha256-V1CsWQ1qgDI0w7vBcR9xKnS9kjuED+MIEM320s5W1iI=";
         doCheck = false;
+
         subPackages = [
           "cmd/cli"
+        ];
+
+        ldflags = [
+          "-s"
+          "-w"
+          "-X main.CliVersion=${cliVersion}"
         ];
 
         postInstall = ''

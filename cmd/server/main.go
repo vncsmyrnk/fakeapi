@@ -21,6 +21,10 @@ import (
 	"fakeapi/internal/service"
 )
 
+var (
+	ServerVersion = "dev"
+)
+
 func overrideEndpointsWithFile(ctx context.Context, svc port.EndpointService, filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -49,6 +53,8 @@ func overrideEndpointsWithFile(ctx context.Context, svc port.EndpointService, fi
 
 func main() {
 	port := flag.IntP("port", "p", 8080, "Port to run the server on")
+	version := flag.BoolP("version", "v", false, "Display the current version")
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Run a Fake API HTTP server\n\n")
 		fmt.Fprintf(os.Stderr, "Usage:\n")
@@ -60,7 +66,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Flags:\n")
 		flag.PrintDefaults()
 	}
+
 	flag.Parse()
+	if *version {
+		fmt.Printf("%s\n", ServerVersion)
+		os.Exit(0)
+	}
 
 	args := flag.Args()
 	var endpointsFilePath string

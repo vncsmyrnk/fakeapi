@@ -28,6 +28,10 @@ var client = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
+var (
+	CliVersion = "dev"
+)
+
 type assertionExpectedValues struct {
 	Method         string
 	URI            string
@@ -39,6 +43,7 @@ type assertionExpectedValues struct {
 func main() {
 	port := flag.IntP("port", "p", 8080, "Port the target server is running on")
 	quiet := flag.BoolP("quiet", "q", false, "Quiet mode")
+	version := flag.BoolP("version", "v", false, "Display the current version")
 
 	var (
 		headers, attrs []string
@@ -60,6 +65,11 @@ func main() {
 	}
 
 	flag.Parse()
+	if *version {
+		fmt.Printf("%s\n", CliVersion)
+		os.Exit(0)
+	}
+
 	if flag.NArg() == 1 || flag.NArg() > 2 {
 		flag.Usage()
 		os.Exit(1)
