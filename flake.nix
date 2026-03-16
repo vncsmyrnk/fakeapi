@@ -10,7 +10,7 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-      serverVersion = "0.4.0";
+      serverVersion = "0.5.0";
       cliVersion = "0.4.0";
 
       src = pkgs.lib.cleanSourceWith {
