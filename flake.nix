@@ -107,6 +107,7 @@
           ];
 
           User = "1000:1000";
+          WorkingDir = "/data";
           Entrypoint = [ "${server}/bin/fakeapi" ];
           Labels = {
             "org.opencontainers.image.source" = "https://github.com/vncsmyrnk/fakeapi";
