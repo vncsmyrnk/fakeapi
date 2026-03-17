@@ -79,10 +79,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	if *occurences == -1 {
-		occurences = &[]int{1}[0]
-	}
+	onlyRequestCountMode := flag.NArg() == 0
 
 	url := requestURL(serverBaseURL, *port)
 	requests, err := getRequests(url)
@@ -98,6 +95,10 @@ func main() {
 	if len(args) >= 2 {
 		method = args[0]
 		uri = args[1]
+	}
+
+	if *occurences == -1 {
+		occurences = &[]int{1}[0]
 	}
 
 	assertion := assertionExpectedValues{
@@ -129,8 +130,8 @@ func main() {
 	}
 
 	actualRequestCountMatchesAssertion := matchedRequestIDsCount == assertion.Occurrences
-	noPendingRequests := matchedRequestIDsCount == 0 && len(succeededAssertions) == 0
-	if matchedRequestIDsCount == assertion.Occurrences || (noPendingRequests && assertion.Occurrences == 0) {
+	requestCountMatchesAssertionOnOnlyCountMode := onlyRequestCountMode && len(requests) == assertion.Occurrences
+	if matchedRequestIDsCount == assertion.Occurrences || requestCountMatchesAssertionOnOnlyCountMode {
 		actualRequestCountMatchesAssertion = true
 	}
 
@@ -139,8 +140,8 @@ func main() {
 			fmt.Sprintf("❌ Occurence count mismatch: expected %d, got %d",
 				assertion.Occurrences, len(matchedRequestIDs)))
 		matchedRequestIDs = []int{}
-	} else if noPendingRequests {
-		m := fmt.Sprintf("✅ There are still %d pending assertions", matchedRequestIDsCount)
+	} else if requestCountMatchesAssertionOnOnlyCountMode {
+		m := fmt.Sprintf("✅ There were still %d pending assertions", matchedRequestIDsCount)
 		if matchedRequestIDsCount == 0 {
 			m = "✅ There are no pending assertions"
 		}
