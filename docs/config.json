@@ -8,8 +8,8 @@
     }
   },
   {
-    "uri": "/items/empty",
-    "method": "PUT",
+    "uri": "/tools",
+    "method": "POST",
     "statusCode": 204
   },
   {
