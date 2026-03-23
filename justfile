@@ -2,13 +2,13 @@ default:
   just --list
 
 run-server *args:
-  go run cmd/server/main.go {{args}}
+  FAKEAPI_DB_PATH="$HOME/file.db" go run cmd/server/main.go {{args}}
 
 run-cli *args:
   go run cmd/cli/main.go {{args}}
 
-debug *args:
-  dlv debug --headless --listen=:2345 --api-version=2 cmd/server/main.go -- {{args}}
+debug-server *args:
+  FAKEAPI_DB_PATH="$HOME/file.db" dlv debug --headless --listen=:2345 --api-version=2 cmd/server/main.go -- {{args}}
 
 generate:
   go generate ./...

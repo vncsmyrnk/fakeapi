@@ -180,7 +180,7 @@ func handleDeleteRequests(s metaServices, w http.ResponseWriter, r *http.Request
 }
 
 func handlePostAssertions(s metaServices, w http.ResponseWriter, r *http.Request) {
-	var req assertionRequest
+	var req AssertionRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		log.Errorf("failed to decode body: %v", err)
@@ -188,12 +188,28 @@ func handlePostAssertions(s metaServices, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = s.assertionService.Create(r.Context(), req)
+	a, err := newDomainAssertionFromAssertionRequest(req)
+	if err != nil {
+		log.Errorf("failed to decode body: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	result, err := s.assertionService.Assert(r.Context(), a)
 	if err != nil {
 		log.Errorf("failed to create assertions: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	if !result.Success {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	response := newAssertionResponse(result)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Errorf("failed encode response: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

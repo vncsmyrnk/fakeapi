@@ -14,10 +14,10 @@ type assertionRepository struct {
 }
 
 // Ensure requestRepository implements port.RequestRepository
-var _ port.AssetionRepository = (*assertionRepository)(nil)
+var _ port.AssertionRepository = (*assertionRepository)(nil)
 
 // NewRequestRepository creates a new SQLite request repository.
-func NewAssertionRepository(db *sqlx.DB) port.AssetionRepository {
+func NewAssertionRepository(db *sqlx.DB) port.AssertionRepository {
 	return &assertionRepository{
 		db: db,
 	}

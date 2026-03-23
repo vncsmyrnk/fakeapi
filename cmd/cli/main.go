@@ -4,23 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
-	"github.com/tidwall/gjson"
 
 	apiHTTP "fakeapi/internal/handler/http"
 )
 
 const (
 	serverBaseURL     = "http://localhost"
-	getRequestsURI    = "/requests?pending=true"
 	postAssertionsURI = "/assertions"
 )
 
@@ -32,12 +28,10 @@ var (
 	CliVersion = "dev"
 )
 
-type assertionExpectedValues struct {
-	Method         string
-	URI            string
-	Headers        map[string]string
-	BodyAttributes map[string]string
-	Occurrences    int
+type assertionResult struct {
+	Success  bool
+	Title    string
+	Messages []string
 }
 
 func main() {
@@ -79,13 +73,8 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	onlyRequestCountMode := flag.NArg() == 0
 
 	url := requestURL(serverBaseURL, *port)
-	requests, err := getRequests(url)
-	if err != nil {
-		log.Fatalf("failed to fetch requests: %v", err)
-	}
 
 	expectedHeaders := headersParsed(headers)
 	expectedBodyAttrs := attributesParsed(attrs)
@@ -98,209 +87,39 @@ func main() {
 	}
 
 	if *occurences == -1 {
-		occurences = &[]int{1}[0]
+		occurences = nil
 	}
 
-	assertion := assertionExpectedValues{
-		Method:         method,
-		URI:            uri,
-		Headers:        expectedHeaders,
-		BodyAttributes: expectedBodyAttrs,
-		Occurrences:    *occurences,
+	assertion := apiHTTP.AssertionRequest{
+		Method:  method,
+		URI:     uri,
+		Headers: expectedHeaders,
+		Body:    expectedBodyAttrs,
+		Count:   occurences,
 	}
 
-	var (
-		succeededAssertions, failedAssertions []string
-		matchedRequestIDs                     []int
-	)
-	for _, r := range requests {
-		match, s, f := assertRequest(r, assertion)
-		if match {
-			succeededAssertions = append(succeededAssertions, s...)
-			failedAssertions = append(failedAssertions, f...)
-			if len(f) == 0 {
-				matchedRequestIDs = append(matchedRequestIDs, r.ID)
-			}
-		}
-	}
-
-	matchedRequestIDsCount := len(matchedRequestIDs)
-	if matchedRequestIDsCount >= 1 {
-		failedAssertions = []string{}
-	}
-
-	actualRequestCountMatchesAssertion := matchedRequestIDsCount == assertion.Occurrences
-	requestCountMatchesAssertionOnOnlyCountMode := onlyRequestCountMode && len(requests) == assertion.Occurrences
-	if matchedRequestIDsCount == assertion.Occurrences || requestCountMatchesAssertionOnOnlyCountMode {
-		actualRequestCountMatchesAssertion = true
-	}
-
-	if !actualRequestCountMatchesAssertion {
-		failedAssertions = append(failedAssertions,
-			fmt.Sprintf("❌ Occurence count mismatch: expected %d, got %d",
-				assertion.Occurrences, len(matchedRequestIDs)))
-		matchedRequestIDs = []int{}
-	} else if requestCountMatchesAssertionOnOnlyCountMode {
-		m := fmt.Sprintf("✅ There were still %d pending assertions", matchedRequestIDsCount)
-		if matchedRequestIDsCount == 0 {
-			m = "✅ There are no pending assertions"
-		}
-		succeededAssertions = []string{m}
-	}
-
-	p := quietAwarePrintLnGenerator(*quiet)
-	showAssertions(p, succeededAssertions, failedAssertions)
-
-	err = postAssertedRequestIDs(url, matchedRequestIDs)
+	result, err := postAssertions(url, assertion)
 	if err != nil {
-		log.Warnf("failed to assert request IDs: %v", err)
+		log.Fatalf("failed to post assertions: %v", err)
 	}
 
-	if len(failedAssertions) > 0 {
+	p := quietAwarePrintfGenerator(*quiet)
+	showAssertions(p, result)
+
+	if !result.Success {
 		os.Exit(1)
 	}
-}
-
-func assertRequest(
-	r apiHTTP.RequestResponse,
-	a assertionExpectedValues,
-) (match bool, succeededAssertions, failedAssertions []string) {
-	emptyMethodAndURI := a.Method == "" && a.URI == ""
-	if emptyMethodAndURI {
-		return true, succeededAssertions, failedAssertions
-	}
-
-	requestAndExpectedMethodURIMatch := r.Method == a.Method &&
-		r.URI == a.URI
-	if !requestAndExpectedMethodURIMatch {
-		return
-	}
-
-	h, _ := json.Marshal(r.RequestHeaders)
-	succeededHeaderAssertions, failedHeaderAssertions :=
-		assertHeaders(string(h), a.Headers)
-
-	b, _ := json.Marshal(r.RequestBody)
-	succeededBodyAssertions, failedBodyAssertions :=
-		assertPayload(string(b), a.BodyAttributes)
-
-	succeededAssertions = append(succeededHeaderAssertions, succeededBodyAssertions...)
-	failedAssertions = append(failedHeaderAssertions, failedBodyAssertions...)
-
-	if len(succeededAssertions) == 0 && len(failedAssertions) == 0 {
-		succeededAssertions = append(succeededAssertions,
-			fmt.Sprintf("✅ Method and URI matches (%s %s)", r.Method, r.URI))
-	}
-
-	return true, succeededAssertions, failedAssertions
-}
-
-func assertPayload(jsonPayload string, expectedAttrs map[string]string) (successes []string, failures []string) {
-	if len(expectedAttrs) == 0 {
-		return successes, failures
-	}
-
-	if !gjson.Valid(jsonPayload) {
-		return successes, append(failures, "❌ Payload from database is not valid JSON")
-	}
-
-	for p, v := range expectedAttrs {
-		result := gjson.Get(jsonPayload, p)
-
-		if !result.Exists() {
-			failures = append(failures, fmt.Sprintf("❌ Attribute '%s' not found in payload", p))
-			continue
-		}
-
-		actualVal := result.String()
-		if actualVal != v {
-			failures = append(failures, fmt.Sprintf("❌ Mismatch for '%s': expected '%s', got '%s'", p, v, actualVal))
-		} else {
-			successes = append(successes, fmt.Sprintf("✅ Attribute '%s' matches ('%s')", p, actualVal))
-		}
-	}
-
-	return successes, failures
-}
-
-func assertHeaders(jsonHeaders string, expectedHeaders map[string]string) (successes []string, failures []string) {
-	if len(expectedHeaders) == 0 {
-		return successes, failures
-	}
-
-	if !gjson.Valid(jsonHeaders) {
-		return successes, append(failures, "❌ Headers from database are not valid JSON")
-	}
-
-	parsedDBHeaders := gjson.Parse(jsonHeaders).Map()
-	normalizedDBHeaders := make(map[string]string)
-
-	for k, v := range parsedDBHeaders {
-		normalizedDBHeaders[strings.ToLower(k)] = v.String()
-	}
-
-	for k, v := range expectedHeaders {
-		actualVal, exists := normalizedDBHeaders[k]
-
-		if !exists {
-			failures = append(failures, fmt.Sprintf("❌ Header '%s' not found in request", k))
-			continue
-		}
-
-		if actualVal != v {
-			failures = append(failures,
-				fmt.Sprintf("❌ Mismatch for header '%s': expected '%s', got '%s'", k, v, actualVal))
-		} else {
-			successes = append(successes,
-				fmt.Sprintf("✅ Header '%s' matches ('%s')", k, actualVal))
-		}
-	}
-
-	return successes, failures
 }
 
 func requestURL(baseURL string, port int) string {
 	return fmt.Sprintf("%s:%d", baseURL, port)
 }
 
-func getRequests(url string) ([]apiHTTP.RequestResponse, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", url, getRequestsURI), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-FakeAPI-Control", "meta")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var requests []apiHTTP.RequestResponse
-	err = json.Unmarshal(b, &requests)
-	if err != nil {
-		return nil, err
-	}
-
-	return requests, nil
-}
-
-func postAssertedRequestIDs(url string, ids []int) error {
-	if len(ids) == 0 {
-		return nil
-	}
-
-	d, _ := json.Marshal(ids)
+func postAssertions(url string, assertion apiHTTP.AssertionRequest) (result assertionResult, err error) {
+	d, _ := json.Marshal(assertion)
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", url, postAssertionsURI), bytes.NewBuffer(d))
 	if err != nil {
-		return err
+		return result, err
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -308,15 +127,24 @@ func postAssertedRequestIDs(url string, ids []int) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return result, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		return nil
+	var assertionResponse apiHTTP.AssertionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&assertionResponse); err != nil {
+		return result, fmt.Errorf("failed to decode JSON: %v", err)
 	}
 
-	return fmt.Errorf("failed to request assertions")
+	result = assertionResult{
+		Title:    assertionResponse.Title,
+		Messages: assertionResponse.Messages,
+	}
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		result.Success = true
+	}
+
+	return result, nil
 }
 
 func headersParsed(headers []string) map[string]string {
@@ -345,41 +173,26 @@ func attributesParsed(attributes []string) map[string]string {
 	return expectedAttrs
 }
 
-func showAssertions(printLn func(args ...any), succeededAssertions, failedAssertions []string) {
-	if len(succeededAssertions) == 0 && len(failedAssertions) == 0 {
-		printLn("❌ The assertion did not match any request")
+func showAssertions(printf func(string, ...any), result assertionResult) {
+	if result.Success {
+		printf("✅ %s\n", result.Title)
 		return
 	}
 
-	s := lo.Uniq(succeededAssertions)
-	f := lo.Uniq(failedAssertions)
-	for _, assertionText := range s {
-		printLn(assertionText)
-	}
-
-	if len(s) > 0 {
-		printLn()
-	}
-
-	if len(f) > 0 {
-		printLn("--- Assertion failures ---")
-		for _, assertionText := range f {
-			printLn(assertionText)
-		}
-
-		if len(s) == 0 {
-			printLn("\n❌ All assertions failed")
-		}
+	if len(result.Messages) == 0 {
+		printf("❌ %s\n", result.Title)
 		return
 	}
 
-	printLn("🎉 All assertions succeeded!")
+	for _, msg := range result.Messages {
+		printf("❌ %s\n", msg)
+	}
 }
 
-func quietAwarePrintLnGenerator(quiet bool) func(args ...any) {
-	return func(args ...any) {
+func quietAwarePrintfGenerator(quiet bool) func(s string, args ...any) {
+	return func(s string, args ...any) {
 		if !quiet {
-			fmt.Println(args...)
+			fmt.Printf(s, args...)
 		}
 	}
 }

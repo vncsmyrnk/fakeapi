@@ -95,8 +95,66 @@ SELECT
   END asserted,
   r.hit_time, r.user_agent, r.request_headers, r.request_body 
 FROM requests r
-left join assertions a on a.request_id = r.id
 JOIN endpoints e ON r.endpoint_id = e.id
+LEFT JOIN assertions a on a.request_id = r.id
+ORDER BY r.hit_time DESC;`
+
+	var dbRequests []request
+	err := r.db.SelectContext(ctx, &dbRequests, query)
+	if err != nil {
+		return nil, fmt.Errorf("select requests: %w", err)
+	}
+
+	requests := make([]domain.Request, len(dbRequests))
+	for i, req := range dbRequests {
+		requests[i] = toDomainRequest(req)
+	}
+
+	return requests, nil
+}
+
+func (r *requestRepository) FetchPendingByMethodAndURI(ctx context.Context, method, uri string) ([]domain.Request, error) {
+	query := `
+SELECT
+  r.id, r.endpoint_id, r.uri, e.method, false asserted,
+  r.hit_time, r.user_agent, r.request_headers, r.request_body
+FROM requests r
+JOIN endpoints e ON r.endpoint_id = e.id
+	AND e.method = ?
+WHERE r.uri = ?
+  AND NOT EXISTS (
+    SELECT 1
+    FROM assertions
+    WHERE request_id = r.id
+  )
+ORDER BY r.hit_time DESC;`
+
+	var dbRequests []request
+	err := r.db.SelectContext(ctx, &dbRequests, query, method, uri)
+	if err != nil {
+		return nil, fmt.Errorf("select requests: %w", err)
+	}
+
+	requests := make([]domain.Request, len(dbRequests))
+	for i, req := range dbRequests {
+		requests[i] = toDomainRequest(req)
+	}
+
+	return requests, nil
+}
+
+func (r *requestRepository) FetchPending(ctx context.Context) ([]domain.Request, error) {
+	query := `
+SELECT
+  r.id, r.endpoint_id, r.uri, e.method, false asserted,
+  r.hit_time, r.user_agent, r.request_headers, r.request_body
+FROM requests r
+JOIN endpoints e ON r.endpoint_id = e.id
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM assertions
+    WHERE request_id = r.id
+  )
 ORDER BY r.hit_time DESC;`
 
 	var dbRequests []request

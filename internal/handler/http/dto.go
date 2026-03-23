@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"fakeapi/internal/domain"
 )
@@ -12,15 +13,17 @@ type endpointResponse struct {
 	URI        string `json:"uri"`
 	Method     string `json:"method"`
 	StatusCode int    `json:"statusCode"`
-	Content    any    `json:"content"`
+	// TODO: rename this to "response"
+	Content any `json:"content"`
 }
 
 type EndpointRequest struct {
-	ID         int             `json:"id"`
-	URI        string          `json:"uri"`
-	Method     string          `json:"method"`
-	StatusCode int             `json:"statusCode"`
-	Content    json.RawMessage `json:"content"`
+	ID         int    `json:"id"`
+	URI        string `json:"uri"`
+	Method     string `json:"method"`
+	StatusCode int    `json:"statusCode"`
+	// TODO: rename this to "response"
+	Content json.RawMessage `json:"content"`
 }
 
 func newEndpointResponse(e domain.Endpoint) endpointResponse {
@@ -98,4 +101,40 @@ func newRequestResponse(r domain.Request) RequestResponse {
 	}
 }
 
-type assertionRequest []int
+type AssertionRequest struct {
+	URI     string            `json:"uri"`
+	Method  string            `json:"method"`
+	Count   *int              `json:"count"`
+	Body    map[string]string `json:"body"`
+	Headers map[string]string `json:"headers"`
+}
+
+func newDomainAssertionFromAssertionRequest(ar AssertionRequest) (assertion domain.Assertion, err error) {
+	if ar.Count == nil && (ar.URI == "" || ar.Method == "") {
+		return assertion, fmt.Errorf("count or method/uri are required")
+	}
+
+	count := 1
+	if ar.Count != nil {
+		count = *ar.Count
+	}
+	return domain.Assertion{
+		Method:  ar.Method,
+		URI:     ar.URI,
+		Body:    ar.Body,
+		Headers: ar.Headers,
+		Count:   count,
+	}, nil
+}
+
+type AssertionResponse struct {
+	Title    string   `json:"title"`
+	Messages []string `json:"messages"`
+}
+
+func newAssertionResponse(ar domain.AssertionResult) AssertionResponse {
+	return AssertionResponse{
+		Title:    ar.Title,
+		Messages: ar.Messages,
+	}
+}

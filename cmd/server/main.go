@@ -107,7 +107,7 @@ func main() {
 	reqSvc := service.NewRequestService(reqRepo)
 
 	assRepo := sqlite.NewAssertionRepository(db)
-	assSvc := service.NewAssertionService(assRepo)
+	assSvc := service.NewAssertionService(assRepo, reqRepo)
 
 	metaHandler := apiHTTP.NewMetaHandler(endSvc, reqSvc, assSvc)
 	mainHandler := apiHTTP.NewMainHandler(endSvc, reqSvc, metaHandler)
