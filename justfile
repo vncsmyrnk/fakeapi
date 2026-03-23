@@ -23,6 +23,12 @@ docker-build:
 install-linter:
   go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
+install-lua-module:
+  luarocks --local --lua-version=5.1 install api/lua/*.rockspec
+
+uninstall-lua-module:
+  luarocks --local --lua-version=5.1 remove api/lua/*.rockspec
+
 lint: install-linter lint-only
 
 lint-only:

@@ -1,26 +1,9 @@
 ---@class FakeApi
 local M = {}
 
----@param port integer
----@param config_filepath string
-function M.start_server_docker(port, config_filepath)
-  local cmd = string.format(
-    [[docker run --rm -d \
---name fakeapi-server \
--v %s:/data/config.json \
--p 8080:%s \
-vncsmyrnk/fakeapi \
-/data/config.json >/dev/null 2>&1]],
-    config_filepath,
-    port
-  )
-  return os.execute(cmd) == 0
-end
-
-function M.stop_server_docker()
-  local cmd = [[docker stop fakeapi-server >/dev/null 2>&1]]
-  return os.execute(cmd) == 0
-end
+local defaults = {
+  port = 8080,
+}
 
 ---@class AssertOpts
 ---@field count integer
@@ -31,7 +14,25 @@ end
 ---@param opts AssertOpts
 ---@return boolean
 function M.assert(method, uri, opts)
-  local cmd = string.format([[fakeapi assert %s %s -c %s --quiet]], method, uri, opts.count or 1)
+  opts = opts or {}
+  local cmd = string.format(
+    [[fakeapi assert %s %s -c %s -p %s --quiet]],
+    method,
+    uri,
+    opts.count or 1,
+    opts.port or defaults.port
+  )
+  return os.execute(cmd) == 0
+end
+
+---@class ClearRequestsOpts
+---@field port integer
+
+---@param opts ClearRequestsOpts
+---@return boolean
+function M.clear_requests(opts)
+  opts = opts or {}
+  local cmd = string.format([[fakeapi clear requests -p %s --quiet]], opts.port or defaults.port)
   return os.execute(cmd) == 0
 end
 
