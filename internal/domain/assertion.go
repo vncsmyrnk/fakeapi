@@ -28,11 +28,19 @@ func NewAssertionResultNoPendingAssertionsOK() AssertionResult {
 	}
 }
 
-func NewAssertionResultAllSucceededOK(assertedRequestIDs []int) AssertionResult {
+func NewAssertionResultAllPendingAssertedOK(assertedRequestsIDs []int) AssertionResult {
+	return AssertionResult{
+		Title:      fmt.Sprintf("There were %d pending assertions", len(assertedRequestsIDs)),
+		Success:    true,
+		RequestIDs: assertedRequestsIDs,
+	}
+}
+
+func NewAssertionResultAllSucceededOK(assertedRequestsIDs []int) AssertionResult {
 	return AssertionResult{
 		Title:      "All assertions succeeded!",
 		Success:    true,
-		RequestIDs: assertedRequestIDs,
+		RequestIDs: assertedRequestsIDs,
 	}
 }
 

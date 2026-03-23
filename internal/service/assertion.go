@@ -65,7 +65,7 @@ func (s assertionService) asserter(
 			if err != nil {
 				return result, fmt.Errorf("failed to fetch assertions: %w", err)
 			}
-			return s.assertOnlyRequestCount(a, len(requests)), nil
+			return s.assertOnlyRequestCount(a, requests), nil
 		}, nil
 	}
 
@@ -123,12 +123,21 @@ func (s *assertionService) assert(
 }
 
 func (s *assertionService) assertOnlyRequestCount(
-	assertion domain.Assertion, c int,
+	assertion domain.Assertion, requests []domain.Request,
 ) domain.AssertionResult {
+	c := len(requests)
 	if c != assertion.Count {
 		return domain.NewAssertionResultCountMismatchError(assertion.Count, c)
 	}
-	return domain.NewAssertionResultNoPendingAssertionsOK()
+	if c == 0 {
+		return domain.NewAssertionResultNoPendingAssertionsOK()
+	}
+
+	assertedRequestsIDs := lo.Map(requests,
+		func(item domain.Request, _ int) int {
+			return item.ID
+		})
+	return domain.NewAssertionResultAllPendingAssertedOK(assertedRequestsIDs)
 }
 
 func (s *assertionService) assertPayload(jsonPayload *string, expectedAttrs map[string]string) (failures []string) {
