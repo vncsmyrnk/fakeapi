@@ -40,8 +40,8 @@ func main() {
 	}
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
 
-	port := rootCmd.Flags().IntP("port", "p", 8080, "Port the target server is running on")
-	quiet := rootCmd.Flags().BoolP("quiet", "q", false, "Quiet mode")
+	port := rootCmd.PersistentFlags().IntP("port", "p", 8080, "Port the target server is running on")
+	quiet := rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode")
 
 	cmdAssert := &cobra.Command{
 		Use:   "assert [method] [URI]",
