@@ -11,7 +11,7 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       serverVersion = "0.5.0";
-      cliVersion = "0.6.0";
+      cliVersion = "0.7.0";
 
       src = pkgs.lib.cleanSourceWith {
         src = ./.;

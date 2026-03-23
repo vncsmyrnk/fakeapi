@@ -18,6 +18,7 @@ import (
 const (
 	serverBaseURL     = "http://localhost"
 	postAssertionsURI = "/assertions"
+	deleteRequestsURI = "/requests"
 )
 
 var client = &http.Client{
@@ -43,6 +44,30 @@ func main() {
 	port := rootCmd.PersistentFlags().IntP("port", "p", 8080, "Port the target server is running on")
 	quiet := rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode")
 
+	cmdClear := &cobra.Command{
+		Use:   "clear [method] [URI]",
+		Short: "Deletes fake API configuration or recorded data",
+		Long:  "Deletes fake API configuration or recorded data",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	cmdClearRequests := &cobra.Command{
+		Use:   "requests",
+		Short: "Deletes all recorded requests",
+		Long:  "Deletes all recorded requests",
+		Args:  cobra.NoArgs,
+	}
+	cmdClear.AddCommand(cmdClearRequests)
+	rootCmd.AddCommand(cmdClear)
+
+	cmdClearRequests.Run = func(_ *cobra.Command, _ []string) {
+		url := requestURL(serverBaseURL, *port)
+		err := deleteRequests(url)
+		if err != nil {
+			log.Fatalf("failed to delete requests: %v", err)
+		}
+	}
+
 	cmdAssert := &cobra.Command{
 		Use:   "assert [method] [URI]",
 		Short: "Assert a request made to the fake API",
@@ -59,7 +84,6 @@ func main() {
 
 	cmdAssert.Run = func(cmd *cobra.Command, args []string) {
 		url := requestURL(serverBaseURL, *port)
-
 		expectedHeaders := headersParsed(headers)
 		expectedBodyAttrs := attributesParsed(attrs)
 
@@ -135,6 +159,27 @@ func postAssertions(url string, assertion apiHTTP.AssertionRequest) (result asse
 	}
 
 	return result, nil
+}
+
+func deleteRequests(url string) error {
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s", url, deleteRequestsURI), nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("X-FakeAPI-Control", "meta")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		return nil
+	}
+
+	return fmt.Errorf("unexpected response status while deleting requests")
 }
 
 func headersParsed(headers []string) map[string]string {
