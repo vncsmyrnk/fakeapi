@@ -29,7 +29,5 @@ install-lua-module:
 uninstall-lua-module:
   luarocks --local --lua-version=5.1 remove api/lua/*.rockspec
 
-lint: install-linter lint-only
-
-lint-only:
+lint:
   golangci-lint run
