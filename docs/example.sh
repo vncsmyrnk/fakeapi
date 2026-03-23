@@ -6,7 +6,7 @@ docker run --rm -it -d \
   -v ./config.json:/data/config.json \
   -p 8080:8080 \
   vncsmyrnk/fakeapi \
-  /data/config.json # Also uses a config file with some endpoints
+  config.json # Also uses a config file with some endpoints
 
 echo "Waiting for some time for the server to properly spin up..."
 sleep 1
