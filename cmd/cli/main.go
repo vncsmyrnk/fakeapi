@@ -10,7 +10,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	flag "github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 
 	apiHTTP "fakeapi/internal/handler/http"
 )
@@ -35,80 +35,70 @@ type assertionResult struct {
 }
 
 func main() {
-	port := flag.IntP("port", "p", 8080, "Port the target server is running on")
-	quiet := flag.BoolP("quiet", "q", false, "Quiet mode")
-	version := flag.BoolP("version", "v", false, "Display the current version")
+	rootCmd := &cobra.Command{
+		Version: CliVersion,
+	}
+	rootCmd.SetVersionTemplate("{{.Version}}\n")
+
+	port := rootCmd.Flags().IntP("port", "p", 8080, "Port the target server is running on")
+	quiet := rootCmd.Flags().BoolP("quiet", "q", false, "Quiet mode")
+
+	cmdAssert := &cobra.Command{
+		Use:   "assert [method] [URI]",
+		Short: "Assert a request made to the fake API",
+		Long:  "Assert can ensure a request was made to the server using headers and body filters.",
+		Args:  cobra.ArbitraryArgs,
+	}
 
 	var (
 		headers, attrs []string
 	)
-	flag.StringArrayVarP(&headers, "header", "H", []string{}, "Expected headers in 'Key: Value' format")
-	flag.StringArrayVarP(&attrs, "body-attributes", "b", []string{}, "Expected body attributes in 'key=value' format")
-	occurences := flag.IntP("occurrences", "c", -1, "Match occurrence count")
+	cmdAssert.Flags().StringArrayVarP(&headers, "header", "H", []string{}, "Expected headers in 'Key: Value' format")
+	cmdAssert.Flags().StringArrayVarP(&attrs, "body-attributes", "b", []string{}, "Expected body attributes in 'key=value' format")
+	requestCount := cmdAssert.Flags().IntP("count", "c", -1, "Match occurrence count")
 
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Assert Fake API requests\n\n")
-		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  fakeassert <method> <uri> [flags]\n\n")
+	cmdAssert.Run = func(cmd *cobra.Command, args []string) {
+		url := requestURL(serverBaseURL, *port)
 
-		fmt.Fprintf(os.Stderr, "Examples:\n")
-		fmt.Fprintf(os.Stderr, "  fakeassert POST /items -H 'user-agent:curl' -a 'status=active'\n\n")
+		expectedHeaders := headersParsed(headers)
+		expectedBodyAttrs := attributesParsed(attrs)
 
-		fmt.Fprintf(os.Stderr, "Flags:\n")
-		flag.PrintDefaults()
+		var method, uri string
+		if len(args) >= 2 {
+			method = args[0]
+			uri = args[1]
+		} else if *requestCount == -1 {
+			_ = cmd.Usage()
+			os.Exit(1)
+		}
+
+		if *requestCount == -1 {
+			requestCount = nil
+		}
+
+		assertion := apiHTTP.AssertionRequest{
+			Method:  method,
+			URI:     uri,
+			Headers: expectedHeaders,
+			Body:    expectedBodyAttrs,
+			Count:   requestCount,
+		}
+
+		result, err := postAssertions(url, assertion)
+		if err != nil {
+			log.Fatalf("failed to post assertions: %v", err)
+		}
+
+		p := quietAwarePrintfGenerator(*quiet)
+		showAssertions(p, result)
+
+		if !result.Success {
+			os.Exit(1)
+		}
 	}
+	rootCmd.AddCommand(cmdAssert)
 
-	flag.Parse()
-	if *version {
-		fmt.Printf("%s\n", CliVersion)
-		os.Exit(0)
-	}
-
-	if flag.NArg() == 1 || flag.NArg() > 2 {
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	if flag.NArg() == 0 && *occurences == -1 {
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	url := requestURL(serverBaseURL, *port)
-
-	expectedHeaders := headersParsed(headers)
-	expectedBodyAttrs := attributesParsed(attrs)
-
-	var method, uri string
-	args := flag.Args()
-	if len(args) >= 2 {
-		method = args[0]
-		uri = args[1]
-	}
-
-	if *occurences == -1 {
-		occurences = nil
-	}
-
-	assertion := apiHTTP.AssertionRequest{
-		Method:  method,
-		URI:     uri,
-		Headers: expectedHeaders,
-		Body:    expectedBodyAttrs,
-		Count:   occurences,
-	}
-
-	result, err := postAssertions(url, assertion)
-	if err != nil {
-		log.Fatalf("failed to post assertions: %v", err)
-	}
-
-	p := quietAwarePrintfGenerator(*quiet)
-	showAssertions(p, result)
-
-	if !result.Success {
-		os.Exit(1)
-	}
+	_ = rootCmd.Execute()
 }
 
 func requestURL(baseURL string, port int) string {

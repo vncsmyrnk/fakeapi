@@ -31,7 +31,7 @@ cat <<EOF > server-config.json
   }
 ]
 EOF
-fakeapi --port 8080 server-config.json
+fakeapi-server --port 8080 server-config.json
 ```
 
 ```sh
@@ -43,10 +43,10 @@ curl -X POST localhost:8080/my-route
 
 All requests sent to the fake API are stored locally and can be queried later for assertions. This is useful for verifying that the expected requests were made to the API during automated tests.
 
-The `fakeassert` CLI checks whether a specific request was received by the server. It returns a zero exit code on success and a non-zero exit code on failure.
+The assert CLI checks whether a specific request was received by the server. It returns a zero exit code on success and a non-zero exit code on failure.
 
 ```sh
-fakeassert --port 8080 POST /my-route
+fakeapi assert --port 8080 POST /my-route
 # Exit code 0: a POST request to /my-route was received
 # Exit code 1: no matching request was found
 ```
@@ -56,17 +56,17 @@ fakeassert --port 8080 POST /my-route
 ### Server
 
 ```sh
-nix profile add github:vncsmyrnk/fakeapi
+nix profile add github:vncsmyrnk/fakeapi#fakeapi-server
 ```
 
 ```sh
 docker run --rm -it -p 8080:8080 vncsmyrnk/fakeapi
 ```
 
-### Assertions CLI
+### CLI
 
 ```sh
-nix profile add github:vncsmyrnk/fakeapi#assert-cli --name fakeassert
+nix profile add github:vncsmyrnk/fakeapi
 ```
 
 ## Roadmap and new features

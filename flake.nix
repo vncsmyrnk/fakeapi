@@ -11,7 +11,7 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       serverVersion = "0.5.0";
-      cliVersion = "0.5.0";
+      cliVersion = "0.6.0";
 
       src = pkgs.lib.cleanSourceWith {
         src = ./.;
@@ -28,10 +28,10 @@
       };
 
       server = pkgs.buildGoModule {
-        name = "fakeapi";
+        name = "fakeapi-server";
         src = src;
         version = serverVersion;
-        vendorHash = "sha256-V1CsWQ1qgDI0w7vBcR9xKnS9kjuED+MIEM320s5W1iI=";
+        vendorHash = "sha256-KaOkEQcsbKCO7clVWXO6wgftYzQieujtzuC8xD0ftd8=";
         doCheck = false;
 
         subPackages = [
@@ -52,15 +52,15 @@
         ];
 
         postInstall = ''
-          mv $out/bin/server $out/bin/fakeapi
+          mv $out/bin/server $out/bin/fakeapi-server
         '';
       };
 
       cli = pkgs.buildGoModule {
-        name = "fakeassert";
+        name = "fakeapi-cli";
         src = src;
         version = cliVersion;
-        vendorHash = "sha256-V1CsWQ1qgDI0w7vBcR9xKnS9kjuED+MIEM320s5W1iI=";
+        vendorHash = "sha256-KaOkEQcsbKCO7clVWXO6wgftYzQieujtzuC8xD0ftd8=";
         doCheck = false;
 
         subPackages = [
@@ -74,7 +74,7 @@
         ];
 
         postInstall = ''
-          mv $out/bin/cli $out/bin/fakeassert
+          mv $out/bin/cli $out/bin/fakeapi
         '';
 
       };
@@ -108,7 +108,7 @@
 
           User = "1000:1000";
           WorkingDir = "/data";
-          Entrypoint = [ "${server}/bin/fakeapi" ];
+          Entrypoint = [ "${server}/bin/fakeapi-server" ];
           Labels = {
             "org.opencontainers.image.source" = "https://github.com/vncsmyrnk/fakeapi";
           };
@@ -117,10 +117,10 @@
     in
     {
       packages.${system} = {
-        default = server;
-        assert-cli = cli;
+        default = cli;
+        cli = cli;
         docker = serverDockerImage;
-        server = server;
+        fakeapi-server = server;
 
         all = pkgs.symlinkJoin {
           name = "all-packages";
