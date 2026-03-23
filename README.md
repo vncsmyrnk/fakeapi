@@ -69,6 +69,16 @@ docker run --rm -it -p 8080:8080 vncsmyrnk/fakeapi
 nix profile add github:vncsmyrnk/fakeapi
 ```
 
+### APIs
+
+Wrappers for `fakeapi` in other languages/tools.
+
+#### Lua
+
+```sh
+luarocks install https://raw.githubusercontent.com/vncsmyrnk/fakeapi/main/api/lua/fakeapi-0.0.1-1.rockspec
+```
+
 ## Roadmap and new features
 
 Check the [milestones section](https://github.com/vncsmyrnk/fakeapi/milestones) to see what is currently being planned or in development.
