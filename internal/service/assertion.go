@@ -43,16 +43,25 @@ func (s *assertionService) Assert(
 		return result, fmt.Errorf("failed to assert requests: %w", err)
 	}
 
-	if !result.Success || len(result.RequestIDs) == 0 {
+	if len(result.RequestIDs) == 0 {
 		return result, nil
 	}
 
-	err = s.repo.Create(ctx, result.RequestIDs)
+	err = s.createAssertionResults(ctx, result)
 	if err != nil {
 		return result, err
 	}
 
 	return result, nil
+}
+
+func (s assertionService) createAssertionResults(
+	ctx context.Context, result domain.AssertionResult,
+) error {
+	if result.Success {
+		return s.repo.CreateAsOK(ctx, result.RequestIDs)
+	}
+	return s.repo.CreateAsFailed(ctx, result.RequestIDs)
 }
 
 func (s assertionService) asserter(
@@ -91,8 +100,11 @@ func (s *assertionService) assert(
 
 	failedAssertionsMessages := make([]string, 0,
 		len(requests)*len(assertion.Headers)*len(assertion.Body))
+	allRequestIDs := make([]int, 0, len(requests))
 	matchedRequestIDs := make([]int, 0, len(requests))
 	for _, r := range requests {
+		allRequestIDs = append(allRequestIDs, r.ID)
+
 		failedHeaderAssertions :=
 			s.assertHeaders(r.RequestHeaders, assertion.Headers)
 
@@ -114,9 +126,9 @@ func (s *assertionService) assert(
 
 	if matchedRequestCount != assertion.Count {
 		if matchedRequestCount > 0 {
-			return domain.NewAssertionResultCountMismatchError(assertion.Count, matchedRequestCount)
+			return domain.NewAssertionResultCountMismatchError(allRequestIDs, assertion.Count, matchedRequestCount)
 		}
-		return domain.NewAssertionResultFailedError(failedAssertionsMessages)
+		return domain.NewAssertionResultFailedError(allRequestIDs, failedAssertionsMessages)
 	}
 
 	return domain.NewAssertionResultAllSucceededOK(matchedRequestIDs)
@@ -126,18 +138,17 @@ func (s *assertionService) assertOnlyRequestCount(
 	assertion domain.Assertion, requests []domain.Request,
 ) domain.AssertionResult {
 	c := len(requests)
+	requestsIDs := lo.Map(requests,
+		func(r domain.Request, _ int) int {
+			return r.ID
+		})
 	if c != assertion.Count {
-		return domain.NewAssertionResultCountMismatchError(assertion.Count, c)
+		return domain.NewAssertionResultCountMismatchError(requestsIDs, assertion.Count, c)
 	}
 	if c == 0 {
 		return domain.NewAssertionResultNoPendingAssertionsOK()
 	}
-
-	assertedRequestsIDs := lo.Map(requests,
-		func(item domain.Request, _ int) int {
-			return item.ID
-		})
-	return domain.NewAssertionResultAllPendingAssertedOK(assertedRequestsIDs)
+	return domain.NewAssertionResultAllPendingAssertedOK(requestsIDs)
 }
 
 func (s *assertionService) assertPayload(jsonPayload *string, expectedAttrs map[string]string) (failures []string) {

@@ -156,7 +156,7 @@ func handleGetRequests(s metaServices, w http.ResponseWriter, r *http.Request) {
 
 	var response []RequestResponse
 	for _, req := range requests {
-		if !pending || !req.Asserted {
+		if !pending || req.AssertionStatus != domain.AssertionStatusOK {
 			response = append(response, newRequestResponse(req))
 		}
 	}

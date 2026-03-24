@@ -6,13 +6,13 @@ import (
 
 // Request represents a recorded HTTP request that hit a mocked endpoint.
 type Request struct {
-	ID             int
-	EndpointID     int
-	URI            string
-	Method         string
-	Asserted       bool
-	HitTime        time.Time
-	UserAgent      *string
-	RequestHeaders *string
-	RequestBody    *string
+	ID              int
+	EndpointID      int
+	URI             string
+	Method          string
+	AssertionStatus AssertionStatus
+	HitTime         time.Time
+	UserAgent       *string
+	RequestHeaders  *string
+	RequestBody     *string
 }

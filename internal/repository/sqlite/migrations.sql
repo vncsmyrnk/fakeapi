@@ -27,8 +27,10 @@ CREATE TABLE IF NOT EXISTS requests (
 CREATE TABLE IF NOT EXISTS assertions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     request_id INTEGER NOT NULL,
-    assert_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT NOT NULL,
+    asserted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE
+    CHECK (status IN ('ok', 'failed')),
     UNIQUE(request_id)
 );

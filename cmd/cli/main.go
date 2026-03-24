@@ -12,6 +12,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	apiHTTP "fakeapi/internal/handler/http"
 )
@@ -113,7 +115,7 @@ func main() {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "METHOD\tURI\tASSERTED")
 		for _, r := range requests {
-			fmt.Fprintf(w, "%s\t%s\t%v\n", r.Method, r.URI, r.Asserted)
+			fmt.Fprintf(w, "%s\t%s\t%v\n", r.Method, r.URI, assertionStatus(r))
 		}
 		w.Flush()
 	}
@@ -299,6 +301,22 @@ func showAssertions(printf func(string, ...any), result assertionResult) {
 	for _, msg := range result.Messages {
 		printf("❌ %s\n", msg)
 	}
+}
+
+func assertionStatus(r apiHTTP.RequestResponse) string {
+	var assertionStatusIcon string
+	switch r.AssertionStatus {
+	case "ok":
+		assertionStatusIcon = "✅"
+	case "failed":
+		assertionStatusIcon = "❌"
+	case "pending":
+		assertionStatusIcon = "⏳"
+	default:
+		assertionStatusIcon = "❔"
+	}
+	assertionStatus := fmt.Sprintf("%s %s", assertionStatusIcon, cases.Title(language.AmericanEnglish).String(r.AssertionStatus))
+	return assertionStatus
 }
 
 func quietAwarePrintfGenerator(quiet bool) func(s string, args ...any) {

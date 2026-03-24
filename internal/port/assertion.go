@@ -12,5 +12,6 @@ type AssertionService interface {
 
 // AssetionRepository defines the data access port for recorded assetions.
 type AssertionRepository interface {
-	Create(ctx context.Context, requestIDs []int) error
+	CreateAsOK(ctx context.Context, requestIDs []int) error
+	CreateAsFailed(ctx context.Context, requestIDs []int) error
 }

@@ -14,6 +14,13 @@ func (a *Assertion) EmptyMethodAndURI() bool {
 	return a.URI == "" || a.Method == ""
 }
 
+type AssertionStatus string
+
+const (
+	AssertionStatusOK     AssertionStatus = "ok"
+	AssertionStatusFailed AssertionStatus = "failed"
+)
+
 type AssertionResult struct {
 	Success    bool
 	Title      string
@@ -44,9 +51,10 @@ func NewAssertionResultAllSucceededOK(assertedRequestsIDs []int) AssertionResult
 	}
 }
 
-func NewAssertionResultNoPendingAssertionsError() AssertionResult {
+func NewAssertionResultNoPendingAssertionsError(assertedRequestsIDs []int) AssertionResult {
 	return AssertionResult{
-		Title: "There are no pending assertions",
+		Title:      "There are no pending assertions",
+		RequestIDs: assertedRequestsIDs,
 	}
 }
 
@@ -56,15 +64,17 @@ func NewAssertionResultNoMatchingRequestsError() AssertionResult {
 	}
 }
 
-func NewAssertionResultFailedError(assertionsMessages []string) AssertionResult {
+func NewAssertionResultFailedError(assertedRequestsIDs []int, assertionsMessages []string) AssertionResult {
 	return AssertionResult{
-		Title:    "Assertions failed",
-		Messages: assertionsMessages,
+		Title:      "Assertions failed",
+		Messages:   assertionsMessages,
+		RequestIDs: assertedRequestsIDs,
 	}
 }
 
-func NewAssertionResultCountMismatchError(expected, got int) AssertionResult {
+func NewAssertionResultCountMismatchError(assertedRequestsIDs []int, expected, got int) AssertionResult {
 	return AssertionResult{
-		Title: fmt.Sprintf("Occurence count mismatch: expected %d, got %d", expected, got),
+		Title:      fmt.Sprintf("Occurence count mismatch: expected %d, got %d", expected, got),
+		RequestIDs: assertedRequestsIDs,
 	}
 }
