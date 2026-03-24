@@ -3,15 +3,15 @@ package domain
 import "fmt"
 
 type Assertion struct {
-	URI     string
+	Path    string
 	Method  string
 	Count   int
 	Body    map[string]string
 	Headers map[string]string
 }
 
-func (a *Assertion) EmptyMethodAndURI() bool {
-	return a.URI == "" || a.Method == ""
+func (a *Assertion) Empty() bool {
+	return a.Path == "" || a.Method == ""
 }
 
 type AssertionStatus string

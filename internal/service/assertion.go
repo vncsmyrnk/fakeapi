@@ -67,7 +67,7 @@ func (s assertionService) createAssertionResults(
 func (s assertionService) asserter(
 	ctx context.Context, assertion domain.Assertion,
 ) (func(domain.Assertion) (domain.AssertionResult, error), error) {
-	onlyCountMode := assertion.EmptyMethodAndURI()
+	onlyCountMode := assertion.Empty()
 	if onlyCountMode {
 		return func(a domain.Assertion) (result domain.AssertionResult, err error) {
 			requests, err := s.requestRepo.FetchPending(ctx)
@@ -79,7 +79,7 @@ func (s assertionService) asserter(
 	}
 
 	return func(a domain.Assertion) (result domain.AssertionResult, err error) {
-		requests, err := s.requestRepo.FetchPendingByMethodAndURI(ctx, assertion.Method, assertion.URI)
+		requests, err := s.requestRepo.FetchPendingByMethodAndPath(ctx, assertion.Method, assertion.Path)
 		if err != nil {
 			return result, fmt.Errorf("failed to fetch assertions: %w", err)
 		}

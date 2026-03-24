@@ -55,7 +55,7 @@
         '';
       };
 
-      cliVersion = "0.10.1";
+      cliVersion = "0.11.0";
       cli = pkgs.buildGoModule {
         name = "fakeapi-cli";
         src = src;

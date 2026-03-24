@@ -1,19 +1,19 @@
 CREATE TABLE IF NOT EXISTS endpoints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    uri TEXT NOT NULL,
+    path TEXT NOT NULL,
     method TEXT NOT NULL,
     status_code INTEGER NOT NULL,
-    content TEXT NULL,
+    response TEXT NULL,
 
     CHECK (method IN ('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD')),
-    CHECK (json_valid(content)),
-    UNIQUE(uri, method)
+    CHECK (json_valid(response)),
+    UNIQUE(path, method)
 );
 
 CREATE TABLE IF NOT EXISTS requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     endpoint_id INTEGER NOT NULL,
-    uri TEXT NOT NULL,
+    path TEXT NOT NULL,
     hit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     user_agent TEXT,
     request_headers TEXT,

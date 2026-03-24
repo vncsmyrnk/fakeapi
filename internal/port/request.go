@@ -20,5 +20,5 @@ type RequestRepository interface {
 	FetchAll(ctx context.Context) ([]domain.Request, error)
 	DeleteAll(ctx context.Context) error
 	FetchPending(ctx context.Context) ([]domain.Request, error)
-	FetchPendingByMethodAndURI(ctx context.Context, method, uri string) ([]domain.Request, error)
+	FetchPendingByMethodAndPath(ctx context.Context, method, path string) ([]domain.Request, error)
 }

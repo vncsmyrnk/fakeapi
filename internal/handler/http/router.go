@@ -41,8 +41,8 @@ func NewMainHandler(endSvc port.EndpointService, reqSvc port.RequestService, met
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(e.StatusCode)
 		log.Infof("endpoint returned %d", e.StatusCode)
-		if e.Content != nil {
-			_, _ = w.Write([]byte(*e.Content))
+		if e.Response != nil {
+			_, _ = w.Write([]byte(*e.Response))
 		}
 	}
 }

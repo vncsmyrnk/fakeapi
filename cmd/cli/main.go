@@ -21,16 +21,16 @@ import (
 )
 
 const (
-	serverBaseURL     = "http://localhost"
-	postAssertionsURI = "/assertions"
-	requestsURI       = "/requests"
+	serverBaseURL      = "http://localhost"
+	postAssertionsPath = "/assertions"
+	requestsPath       = "/requests"
 )
 
 var client = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
-var serverVersionConstraint, _ = semver.NewConstraint("~0.7")
+var serverVersionConstraint, _ = semver.NewConstraint("~0.8")
 
 type assertionResult struct {
 	Success  bool
@@ -114,15 +114,15 @@ func main() {
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		fmt.Fprintln(w, "METHOD\tURI\tASSERTED")
+		fmt.Fprintln(w, "METHOD\tPath\tASSERTED")
 		for _, r := range requests {
-			fmt.Fprintf(w, "%s\t%s\t%v\n", r.Method, r.URI, assertionStatus(r))
+			fmt.Fprintf(w, "%s\t%s\t%v\n", r.Method, r.Path, assertionStatus(r))
 		}
 		w.Flush()
 	}
 
 	cmdAssert := &cobra.Command{
-		Use:   "assert [method] [URI]",
+		Use:   "assert [method] [Path]",
 		Short: "Assert a request made to the fake API",
 		Long:  "Assert can ensure a request was made to the server using headers and body filters.",
 		Args:  cobra.ArbitraryArgs,
@@ -139,10 +139,10 @@ func main() {
 		expectedHeaders := headersParsed(headers)
 		expectedBodyAttrs := attributesParsed(attrs)
 
-		var method, uri string
+		var method, path string
 		if len(args) >= 2 {
 			method = args[0]
-			uri = args[1]
+			path = args[1]
 		} else if *requestCount == -1 {
 			_ = cmd.Usage()
 			os.Exit(1)
@@ -154,7 +154,7 @@ func main() {
 
 		assertion := apiHTTP.AssertionRequest{
 			Method:  method,
-			URI:     uri,
+			Path:    path,
 			Headers: expectedHeaders,
 			Body:    expectedBodyAttrs,
 			Count:   requestCount,
@@ -201,7 +201,7 @@ func requestURL(baseURL string, port int) string {
 
 func postAssertions(r requester, assertion apiHTTP.AssertionRequest) (result assertionResult, err error) {
 	var assertionResponse apiHTTP.AssertionResponse
-	reqOptions := requestOptions{method: http.MethodPost, path: postAssertionsURI, body: assertion, ignoreResponseStatus: true}
+	reqOptions := requestOptions{method: http.MethodPost, path: postAssertionsPath, body: assertion, ignoreResponseStatus: true}
 	responseStatusCode, err := r(reqOptions, &assertionResponse)
 	if err != nil {
 		log.Fatalf("failed to post assertions: %v", err)
@@ -219,7 +219,7 @@ func postAssertions(r requester, assertion apiHTTP.AssertionRequest) (result ass
 }
 
 func getRequests(r requester, pending bool) (requests []apiHTTP.RequestResponse, err error) {
-	reqOptions := requestOptions{method: http.MethodGet, path: fmt.Sprintf("%s?pending=%v", requestsURI, pending)}
+	reqOptions := requestOptions{method: http.MethodGet, path: fmt.Sprintf("%s?pending=%v", requestsPath, pending)}
 	_, err = r(reqOptions, &requests)
 	if err != nil {
 		log.Fatalf("failed to fetch requests: %v", err)
@@ -229,7 +229,7 @@ func getRequests(r requester, pending bool) (requests []apiHTTP.RequestResponse,
 }
 
 func deleteRequests(r requester) error {
-	reqOptions := requestOptions{method: http.MethodDelete, path: requestsURI}
+	reqOptions := requestOptions{method: http.MethodDelete, path: requestsPath}
 	_, err := r(reqOptions, nil)
 	if err != nil {
 		log.Fatalf("failed to delete requests: %v", err)

@@ -121,7 +121,7 @@ func handlePostEndpoint(s metaServices, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if req.URI == "" || req.Method == "" || req.StatusCode <= 0 {
+	if req.Path == "" || req.Method == "" || req.StatusCode <= 0 {
 		log.Errorf("invalid endpoint")
 		w.WriteHeader(http.StatusBadRequest)
 		return

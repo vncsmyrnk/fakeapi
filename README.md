@@ -19,10 +19,10 @@ It is useful not only for building frontend interfaces but also whenever you nee
 cat <<EOF > server-config.json
 [
   {
-    "uri": "/my-route",
+    "path": "/my-route",
     "method": "POST",
     "statusCode": 200,
-    "content": {
+    "response": {
       "name": "value",
       "other-name": {
         "some-other-name": "another-value"

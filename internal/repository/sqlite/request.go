@@ -15,7 +15,7 @@ import (
 type request struct {
 	ID              int       `db:"id"`
 	EndpointID      int       `db:"endpoint_id"`
-	URI             string    `db:"uri"`
+	Path            string    `db:"path"`
 	Method          string    `db:"method"`
 	AssertionStatus string    `db:"assertion_status"`
 	HitTime         time.Time `db:"hit_time"`
@@ -28,7 +28,7 @@ func toDomainRequest(r request) domain.Request {
 	return domain.Request{
 		ID:              r.ID,
 		EndpointID:      r.EndpointID,
-		URI:             r.URI,
+		Path:            r.Path,
 		Method:          r.Method,
 		AssertionStatus: domain.AssertionStatus(r.AssertionStatus),
 		HitTime:         r.HitTime,
@@ -42,7 +42,7 @@ func toDBRequest(r domain.Request) request {
 	return request{
 		ID:             r.ID,
 		EndpointID:     r.EndpointID,
-		URI:            r.URI,
+		Path:           r.Path,
 		Method:         r.Method,
 		HitTime:        r.HitTime,
 		UserAgent:      r.UserAgent,
@@ -67,8 +67,8 @@ func NewRequestRepository(db *sqlx.DB) port.RequestRepository {
 
 func (r *requestRepository) Create(ctx context.Context, req domain.Request) (int, error) {
 	query := `
-INSERT INTO requests (endpoint_id, uri, hit_time, user_agent, request_headers, request_body)
-VALUES (:endpoint_id, :uri, :hit_time, :user_agent, :request_headers, :request_body)
+INSERT INTO requests (endpoint_id, path, hit_time, user_agent, request_headers, request_body)
+VALUES (:endpoint_id, :path, :hit_time, :user_agent, :request_headers, :request_body)
 `
 
 	dbReq := toDBRequest(req)
@@ -88,7 +88,7 @@ VALUES (:endpoint_id, :uri, :hit_time, :user_agent, :request_headers, :request_b
 func (r *requestRepository) FetchAll(ctx context.Context) ([]domain.Request, error) {
 	query := `
 SELECT
-  r.id, r.endpoint_id, r.uri, e.method,
+  r.id, r.endpoint_id, r.path, e.method,
   IFNULL(a.status, 'pending') assertion_status,
   r.hit_time, r.user_agent, r.request_headers, r.request_body 
 FROM requests r
@@ -110,15 +110,15 @@ ORDER BY r.hit_time DESC;`
 	return requests, nil
 }
 
-func (r *requestRepository) FetchPendingByMethodAndURI(ctx context.Context, method, uri string) ([]domain.Request, error) {
+func (r *requestRepository) FetchPendingByMethodAndPath(ctx context.Context, method, path string) ([]domain.Request, error) {
 	query := `
 SELECT
-  r.id, r.endpoint_id, r.uri, e.method, 'pending' assertion_status,
+  r.id, r.endpoint_id, r.path, e.method, 'pending' assertion_status,
   r.hit_time, r.user_agent, r.request_headers, r.request_body
 FROM requests r
 JOIN endpoints e ON r.endpoint_id = e.id
 	AND e.method = ?
-WHERE r.uri = ?
+WHERE r.path = ?
   AND NOT EXISTS (
     SELECT 1
     FROM assertions
@@ -128,7 +128,7 @@ WHERE r.uri = ?
 ORDER BY r.hit_time DESC;`
 
 	var dbRequests []request
-	err := r.db.SelectContext(ctx, &dbRequests, query, method, uri)
+	err := r.db.SelectContext(ctx, &dbRequests, query, method, path)
 	if err != nil {
 		return nil, fmt.Errorf("select requests: %w", err)
 	}
@@ -144,7 +144,7 @@ ORDER BY r.hit_time DESC;`
 func (r *requestRepository) FetchPending(ctx context.Context) ([]domain.Request, error) {
 	query := `
 SELECT
-  r.id, r.endpoint_id, r.uri, e.method, 'pending' assertion_status,
+  r.id, r.endpoint_id, r.path, e.method, 'pending' assertion_status,
   r.hit_time, r.user_agent, r.request_headers, r.request_body
 FROM requests r
 JOIN endpoints e ON r.endpoint_id = e.id

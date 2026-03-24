@@ -8,7 +8,7 @@ import (
 type Request struct {
 	ID              int
 	EndpointID      int
-	URI             string
+	Path            string
 	Method          string
 	AssertionStatus AssertionStatus
 	HitTime         time.Time

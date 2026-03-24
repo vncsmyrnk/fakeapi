@@ -15,29 +15,29 @@ import (
 // endpoint represents the DB record.
 type endpoint struct {
 	ID         int     `db:"id"`
-	URI        string  `db:"uri"`
+	Path       string  `db:"path"`
 	Method     string  `db:"method"`
 	StatusCode int     `db:"status_code"`
-	Content    *string `db:"content"`
+	Response   *string `db:"response"`
 }
 
 func toDomainEndpoint(e endpoint) domain.Endpoint {
 	return domain.Endpoint{
 		ID:         e.ID,
-		URI:        e.URI,
+		Path:       e.Path,
 		Method:     e.Method,
 		StatusCode: e.StatusCode,
-		Content:    e.Content,
+		Response:   e.Response,
 	}
 }
 
 func toDBEndpoint(e domain.Endpoint) endpoint {
 	return endpoint{
 		ID:         e.ID,
-		URI:        e.URI,
+		Path:       e.Path,
 		Method:     e.Method,
 		StatusCode: e.StatusCode,
-		Content:    e.Content,
+		Response:   e.Response,
 	}
 }
 
@@ -56,7 +56,7 @@ func NewRepository(db *sqlx.DB) port.EndpointRepository {
 }
 
 func (r *repository) FetchAll(ctx context.Context) ([]domain.Endpoint, error) {
-	query := `SELECT id, uri, method, status_code, content FROM endpoints;`
+	query := `SELECT id, path, method, status_code, response FROM endpoints;`
 
 	var dbEndpoints []endpoint
 	err := r.db.SelectContext(ctx, &dbEndpoints, query)
@@ -74,7 +74,7 @@ func (r *repository) FetchAll(ctx context.Context) ([]domain.Endpoint, error) {
 
 func (r *repository) FetchByID(ctx context.Context, id int) (domain.Endpoint, error) {
 	query := `
-SELECT id, uri, method, status_code, content
+SELECT id, path, method, status_code, response
 FROM endpoints
 WHERE id = ?;`
 
@@ -92,8 +92,8 @@ WHERE id = ?;`
 
 func (r *repository) Create(ctx context.Context, e domain.Endpoint) (int, error) {
 	query := `
-INSERT INTO endpoints (uri, method, status_code, content) 
-VALUES (:uri, :method, :status_code, :content)
+INSERT INTO endpoints (path, method, status_code, response) 
+VALUES (:path, :method, :status_code, :response)
 `
 
 	dbEndpoint := toDBEndpoint(e)
@@ -135,8 +135,8 @@ func (r *repository) OverrideAll(ctx context.Context, endpoints []domain.Endpoin
 	}
 
 	insertQuery := `
-INSERT INTO endpoints (uri, method, status_code, content) 
-VALUES (:uri, :method, :status_code, :content)
+INSERT INTO endpoints (path, method, status_code, response) 
+VALUES (:path, :method, :status_code, :response)
 `
 	for _, e := range endpoints {
 		dbEndpoint := toDBEndpoint(e)

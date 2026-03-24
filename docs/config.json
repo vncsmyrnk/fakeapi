@@ -1,28 +1,28 @@
 [
   {
-    "uri": "/items/(?P<id>\\d+)",
+    "path": "/items/(?P<id>\\d+)",
     "method": "GET",
     "statusCode": 200,
-    "content": {
+    "response": {
       "id": 1
     }
   },
   {
-    "uri": "/tools",
+    "path": "/tools",
     "method": "POST",
     "statusCode": 204
   },
   {
-    "uri": "/items",
+    "path": "/items",
     "method": "POST",
     "statusCode": 204,
-    "content": null
+    "response": null
   },
   {
-    "uri": "/items",
+    "path": "/items",
     "method": "GET",
     "statusCode": 200,
-    "content": [
+    "response": [
       {
         "id": 1
       },

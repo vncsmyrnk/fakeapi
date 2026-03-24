@@ -13,12 +13,11 @@ var (
 
 // Endpoint represents a mocked API endpoint.
 type Endpoint struct {
-	ID int
-	// TODO: Rename all ocurrences to PATH instead of URI
-	URI        string
+	ID         int
+	Path       string
 	Method     string
 	StatusCode int
-	Content    *string
+	Response   *string
 }
 
 // MatchesRequest checks if the Endpoint matches the given HTTP request.
@@ -27,6 +26,6 @@ func (e Endpoint) MatchesRequest(r *http.Request) bool {
 		return false
 	}
 
-	match, _ := regexp.MatchString(fmt.Sprintf("%s$", e.URI), r.URL.Path)
+	match, _ := regexp.MatchString(fmt.Sprintf("%s$", e.Path), r.URL.Path)
 	return match
 }

@@ -35,7 +35,7 @@ func (s *requestService) Create(ctx context.Context, endpointID int, r *http.Req
 
 	req := domain.Request{
 		EndpointID:     endpointID,
-		URI:            r.URL.Path,
+		Path:           r.URL.Path,
 		HitTime:        time.Now(),
 		UserAgent:      userAgent,
 		RequestHeaders: s.jsonStringHeaders(r),
