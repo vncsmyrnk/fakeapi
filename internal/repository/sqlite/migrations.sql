@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS endpoints (
     method TEXT NOT NULL,
     status_code INTEGER NOT NULL,
     response TEXT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     CHECK (method IN ('GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD')),
     CHECK (json_valid(response)),

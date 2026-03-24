@@ -96,7 +96,8 @@ INSERT INTO endpoints (path, method, status_code, response)
 VALUES (:path, :method, :status_code, :response)
 ON CONFLICT(path, method) DO UPDATE SET
 	status_code = EXCLUDED.status_code,
-	response = EXCLUDED.response;
+	response = EXCLUDED.response,
+	updated_at = CURRENT_TIMESTAMP;
 `
 
 	dbEndpoint := toDBEndpoint(e)
