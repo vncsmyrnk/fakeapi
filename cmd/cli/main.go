@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ import (
 const (
 	serverBaseURL     = "http://localhost"
 	postAssertionsURI = "/assertions"
-	deleteRequestsURI = "/requests"
+	requestsURI       = "/requests"
 )
 
 var client = &http.Client{
@@ -37,6 +38,7 @@ type assertionResult struct {
 
 func main() {
 	rootCmd := &cobra.Command{
+		Use:     "fakeapi",
 		Version: CliVersion,
 	}
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
@@ -45,7 +47,7 @@ func main() {
 	quiet := rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode")
 
 	cmdClear := &cobra.Command{
-		Use:   "clear [method] [URI]",
+		Use:   "clear",
 		Short: "Deletes fake API configuration or recorded data",
 		Long:  "Deletes fake API configuration or recorded data",
 		Args:  cobra.ExactArgs(1),
@@ -66,6 +68,54 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to delete requests: %v", err)
 		}
+	}
+
+	cmdList := &cobra.Command{
+		Use:   "list",
+		Short: "Lists fake API configuration or recorded data",
+		Long:  "Lists fake API configuration or recorded data",
+		Args:  cobra.ExactArgs(1),
+	}
+
+	cmdListRequests := &cobra.Command{
+		Use:   "requests",
+		Short: "Lists all recorded requests",
+		Long:  "Lists all recorded requests",
+		Args:  cobra.NoArgs,
+	}
+	cmdList.AddCommand(cmdListRequests)
+	rootCmd.AddCommand(cmdList)
+	pendingRequests := cmdListRequests.Flags().Bool("pending", false, "Pending requests")
+	jsonRequests := cmdListRequests.Flags().Bool("json", false, "Return a JSON response")
+
+	cmdListRequests.Run = func(_ *cobra.Command, _ []string) {
+		url := requestURL(serverBaseURL, *port)
+		requests, err := getRequests(url, *pendingRequests)
+		if err != nil {
+			log.Fatalf("failed to fetch requests: %v", err)
+		}
+
+		if *jsonRequests {
+			jsonRequests, err := json.Marshal(requests)
+			if err != nil {
+				log.Fatalf("failed to format JSON output: %v", err)
+			}
+
+			var prettyJSON bytes.Buffer
+			err = json.Indent(&prettyJSON, []byte(jsonRequests), "", " ")
+			if err != nil {
+				log.Fatalf("failed to format JSON output: %v", err)
+			}
+			fmt.Println(prettyJSON.String())
+			return
+		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "METHOD\tURI\tASSERTED")
+		for _, r := range requests {
+			fmt.Fprintf(w, "%s\t%s\t%v\n", r.Method, r.URI, r.Asserted)
+		}
+		w.Flush()
 	}
 
 	cmdAssert := &cobra.Command{
@@ -161,8 +211,35 @@ func postAssertions(url string, assertion apiHTTP.AssertionRequest) (result asse
 	return result, nil
 }
 
+func getRequests(url string, pending bool) (requests []apiHTTP.RequestResponse, err error) {
+	req, err := http.NewRequest(http.MethodGet,
+		fmt.Sprintf("%s%s?pending=%v", url, requestsURI, pending), nil)
+	if err != nil {
+		return requests, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-FakeAPI-Control", "meta")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return requests, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 299 {
+		return requests, fmt.Errorf("unexpected response status while fetching requests")
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&requests); err != nil {
+		return requests, fmt.Errorf("failed to decode JSON: %v", err)
+	}
+
+	return requests, nil
+}
+
 func deleteRequests(url string) error {
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s", url, deleteRequestsURI), nil)
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s", url, requestsURI), nil)
 	if err != nil {
 		return err
 	}
