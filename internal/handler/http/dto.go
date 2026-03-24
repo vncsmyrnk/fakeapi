@@ -66,6 +66,7 @@ func NewDomainEndpointFromRequest(er EndpointRequest) domain.Endpoint {
 type RequestResponse struct {
 	ID             int     `json:"id"`
 	EndpointID     int     `json:"endpointId"`
+	Asserted       bool    `json:"asserted"`
 	URI            string  `json:"uri"`
 	Method         string  `json:"method"`
 	HitTime        string  `json:"hitTime"`
@@ -92,6 +93,7 @@ func newRequestResponse(r domain.Request) RequestResponse {
 	return RequestResponse{
 		ID:             r.ID,
 		EndpointID:     r.EndpointID,
+		Asserted:       r.Asserted,
 		URI:            r.URI,
 		Method:         r.Method,
 		HitTime:        r.HitTime.Format("2006-01-02T15:04:05Z07:00"),
