@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"fakeapi/internal/domain"
+	"fakeapi/internal/handler/http/middleware"
 	"fakeapi/internal/port"
 )
 
@@ -24,6 +25,7 @@ type metaServices struct {
 // NewMetaHandler returns a router for the meta endpoints used to control the fake API.
 func NewMetaHandler(endSvc port.EndpointService, reqSvc port.RequestService, assSvc port.AssertionService) http.Handler {
 	r := chi.NewRouter()
+	r.Use(middleware.VersionResponseHeader)
 
 	s := metaServices{
 		endpointService:  endSvc,
