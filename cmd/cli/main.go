@@ -31,7 +31,7 @@ var client = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
-var serverVersionConstraint, _ = semver.NewConstraint(">= 0.7.0")
+var serverVersionConstraint, _ = semver.NewConstraint("~0.7")
 
 type assertionResult struct {
 	Success  bool
