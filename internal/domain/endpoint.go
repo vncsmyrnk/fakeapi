@@ -13,7 +13,8 @@ var (
 
 // Endpoint represents a mocked API endpoint.
 type Endpoint struct {
-	ID         int
+	ID int
+	// TODO: Rename all ocurrences to PATH instead of URI
 	URI        string
 	Method     string
 	StatusCode int
