@@ -21,10 +21,9 @@ import (
 )
 
 const (
-	serverBaseURL        = "http://localhost"
-	postAssertionsURI    = "/assertions"
-	requestsURI          = "/requests"
-	minimumServerVersion = ""
+	serverBaseURL     = "http://localhost"
+	postAssertionsURI = "/assertions"
+	requestsURI       = "/requests"
 )
 
 var client = &http.Client{
