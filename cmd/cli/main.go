@@ -16,6 +16,7 @@ import (
 	"golang.org/x/text/language"
 
 	apiHTTP "fakeapi/internal/handler/http"
+	"fakeapi/internal/version"
 )
 
 const (
@@ -28,10 +29,6 @@ var client = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
-var (
-	CliVersion = "dev"
-)
-
 type assertionResult struct {
 	Success  bool
 	Title    string
@@ -41,7 +38,7 @@ type assertionResult struct {
 func main() {
 	rootCmd := &cobra.Command{
 		Use:     "fakeapi",
-		Version: CliVersion,
+		Version: version.CliVersion,
 	}
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
 

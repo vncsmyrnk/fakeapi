@@ -47,7 +47,7 @@
         ldflags = [
           "-s"
           "-w"
-          "-X main.ServerVersion=${serverVersion}"
+          "-X fakeapi/internal/version.ServerVersion=${serverVersion}"
         ];
 
         postInstall = ''
@@ -70,7 +70,7 @@
         ldflags = [
           "-s"
           "-w"
-          "-X main.CliVersion=${cliVersion}"
+          "-X fakeapi/internal/version.CliVersion=${cliVersion}"
         ];
 
         postInstall = ''

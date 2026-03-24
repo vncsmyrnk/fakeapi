@@ -19,10 +19,7 @@ import (
 	"fakeapi/internal/port"
 	"fakeapi/internal/repository/sqlite"
 	"fakeapi/internal/service"
-)
-
-var (
-	ServerVersion = "dev"
+	internalversion "fakeapi/internal/version"
 )
 
 func overrideEndpointsWithFile(ctx context.Context, svc port.EndpointService, filePath string) error {
@@ -69,7 +66,7 @@ func main() {
 
 	flag.Parse()
 	if *version {
-		fmt.Printf("%s\n", ServerVersion)
+		fmt.Printf("%s\n", internalversion.ServerVersion)
 		os.Exit(0)
 	}
 
