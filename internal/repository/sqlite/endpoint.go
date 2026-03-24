@@ -94,6 +94,9 @@ func (r *repository) Create(ctx context.Context, e domain.Endpoint) (int, error)
 	query := `
 INSERT INTO endpoints (path, method, status_code, response) 
 VALUES (:path, :method, :status_code, :response)
+ON CONFLICT(path, method) DO UPDATE SET
+	status_code = EXCLUDED.status_code,
+	response = EXCLUDED.response;
 `
 
 	dbEndpoint := toDBEndpoint(e)

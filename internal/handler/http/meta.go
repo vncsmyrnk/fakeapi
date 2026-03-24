@@ -35,7 +35,7 @@ func NewMetaHandler(endSvc port.EndpointService, reqSvc port.RequestService, ass
 
 	getEndpointsHandler := handleRequest(s, handleGetEndpoints)
 	deleteEndpointsHandler := handleRequest(s, handleDeleteEndpoint)
-	postEndpointsHandler := handleRequest(s, handlePostEndpoint)
+	putEndpointsHandler := handleRequest(s, handlePutEndpoint)
 	getRequestsHandler := handleRequest(s, handleGetRequests)
 	deleteRequestsHandler := handleRequest(s, handleDeleteRequests)
 	postAssertionsHandler := handleRequest(s, handlePostAssertions)
@@ -43,7 +43,7 @@ func NewMetaHandler(endSvc port.EndpointService, reqSvc port.RequestService, ass
 	r.Route("/endpoints", func(r chi.Router) {
 		r.Get("/", getEndpointsHandler)
 		r.Delete("/{id}", deleteEndpointsHandler)
-		r.Post("/", postEndpointsHandler)
+		r.Put("/", putEndpointsHandler)
 	})
 
 	r.Route("/requests", func(r chi.Router) {
@@ -112,7 +112,7 @@ func handleDeleteEndpoint(s metaServices, w http.ResponseWriter, r *http.Request
 	}
 }
 
-func handlePostEndpoint(s metaServices, w http.ResponseWriter, r *http.Request) {
+func handlePutEndpoint(s metaServices, w http.ResponseWriter, r *http.Request) {
 	var req EndpointRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -121,7 +121,7 @@ func handlePostEndpoint(s metaServices, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if req.Path == "" || req.Method == "" || req.StatusCode <= 0 {
+	if req.Path == "" || req.Method == "" {
 		log.Errorf("invalid endpoint")
 		w.WriteHeader(http.StatusBadRequest)
 		return
