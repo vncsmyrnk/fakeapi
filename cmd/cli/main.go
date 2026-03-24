@@ -114,7 +114,7 @@ func main() {
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		fmt.Fprintln(w, "METHOD\tPath\tASSERTED")
+		fmt.Fprintln(w, "METHOD\tPATH\tASSERTED")
 		for _, r := range requests {
 			fmt.Fprintf(w, "%s\t%s\t%v\n", r.Method, r.Path, assertionStatus(r))
 		}
@@ -122,7 +122,7 @@ func main() {
 	}
 
 	cmdAssert := &cobra.Command{
-		Use:   "assert [method] [Path]",
+		Use:   "assert [method] [PATH]",
 		Short: "Assert a request made to the fake API",
 		Long:  "Assert can ensure a request was made to the server using headers and body filters.",
 		Args:  cobra.ArbitraryArgs,
