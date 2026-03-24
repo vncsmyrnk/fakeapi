@@ -17,7 +17,6 @@ type endpointResponse struct {
 }
 
 type EndpointRequest struct {
-	ID         int             `json:"id"`
 	Path       string          `json:"path"`
 	Method     string          `json:"method"`
 	StatusCode int             `json:"statusCode"`
@@ -53,7 +52,6 @@ func NewDomainEndpointFromRequest(er EndpointRequest) domain.Endpoint {
 	}
 
 	return domain.Endpoint{
-		ID:         er.ID,
 		Path:       er.Path,
 		Method:     er.Method,
 		StatusCode: er.StatusCode,
