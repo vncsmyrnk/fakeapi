@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tidwall/match v1.1.1 // indirect

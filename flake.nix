@@ -30,7 +30,7 @@
         name = "fakeapi-server";
         src = src;
         version = serverVersion;
-        vendorHash = "sha256-KaOkEQcsbKCO7clVWXO6wgftYzQieujtzuC8xD0ftd8=";
+        vendorHash = "sha256-5XbjI+j6lOkEKbZ10c1i9Vdb2Q1WXO0MrZ4tVSAyzKM=";
         doCheck = false;
 
         subPackages = [
@@ -55,12 +55,12 @@
         '';
       };
 
-      cliVersion = "0.9.0";
+      cliVersion = "0.10.0";
       cli = pkgs.buildGoModule {
         name = "fakeapi-cli";
         src = src;
         version = cliVersion;
-        vendorHash = "sha256-KaOkEQcsbKCO7clVWXO6wgftYzQieujtzuC8xD0ftd8=";
+        vendorHash = "sha256-5XbjI+j6lOkEKbZ10c1i9Vdb2Q1WXO0MrZ4tVSAyzKM=";
         doCheck = false;
 
         subPackages = [

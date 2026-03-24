@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
@@ -20,14 +21,17 @@ import (
 )
 
 const (
-	serverBaseURL     = "http://localhost"
-	postAssertionsURI = "/assertions"
-	requestsURI       = "/requests"
+	serverBaseURL        = "http://localhost"
+	postAssertionsURI    = "/assertions"
+	requestsURI          = "/requests"
+	minimumServerVersion = ""
 )
 
 var client = &http.Client{
 	Timeout: 10 * time.Second,
 }
+
+var serverVersionConstraint, _ = semver.NewConstraint(">= 0.7.0")
 
 type assertionResult struct {
 	Success  bool
@@ -61,9 +65,11 @@ func main() {
 	cmdClear.AddCommand(cmdClearRequests)
 	rootCmd.AddCommand(cmdClear)
 
+	url := requestURL(serverBaseURL, *port)
+	r := newRequester(url, serverResponseVersionCheck)
+
 	cmdClearRequests.Run = func(_ *cobra.Command, _ []string) {
-		url := requestURL(serverBaseURL, *port)
-		err := deleteRequests(url)
+		err := deleteRequests(r)
 		if err != nil {
 			log.Fatalf("failed to delete requests: %v", err)
 		}
@@ -88,8 +94,7 @@ func main() {
 	jsonRequests := cmdListRequests.Flags().Bool("json", false, "Return a JSON response")
 
 	cmdListRequests.Run = func(_ *cobra.Command, _ []string) {
-		url := requestURL(serverBaseURL, *port)
-		requests, err := getRequests(url, *pendingRequests)
+		requests, err := getRequests(r, *pendingRequests)
 		if err != nil {
 			log.Fatalf("failed to fetch requests: %v", err)
 		}
@@ -132,7 +137,6 @@ func main() {
 	requestCount := cmdAssert.Flags().IntP("count", "c", -1, "Match occurrence count")
 
 	cmdAssert.Run = func(cmd *cobra.Command, args []string) {
-		url := requestURL(serverBaseURL, *port)
 		expectedHeaders := headersParsed(headers)
 		expectedBodyAttrs := attributesParsed(attrs)
 
@@ -157,7 +161,7 @@ func main() {
 			Count:   requestCount,
 		}
 
-		result, err := postAssertions(url, assertion)
+		result, err := postAssertions(r, assertion)
 		if err != nil {
 			log.Fatalf("failed to post assertions: %v", err)
 		}
@@ -174,88 +178,65 @@ func main() {
 	_ = rootCmd.Execute()
 }
 
+func serverResponseVersionCheck(r *http.Response) error {
+	v := r.Header.Get("x-fakeapi-version")
+	if v == "dev" {
+		return nil
+	}
+	serverVersion, err := semver.NewVersion(v)
+	if err != nil {
+		return err
+	}
+
+	if constraintOK := serverVersionConstraint.Check(serverVersion); !constraintOK {
+		return fmt.Errorf(
+			"server version not compatible with the current CLI. The current CLI supports the following server versions: %s",
+			serverVersionConstraint.String())
+	}
+	return nil
+}
+
 func requestURL(baseURL string, port int) string {
 	return fmt.Sprintf("%s:%d", baseURL, port)
 }
 
-func postAssertions(url string, assertion apiHTTP.AssertionRequest) (result assertionResult, err error) {
-	d, _ := json.Marshal(assertion)
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s%s", url, postAssertionsURI), bytes.NewBuffer(d))
-	if err != nil {
-		return result, err
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-FakeAPI-Control", "meta")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return result, err
-	}
-	defer resp.Body.Close()
-
+func postAssertions(r requester, assertion apiHTTP.AssertionRequest) (result assertionResult, err error) {
 	var assertionResponse apiHTTP.AssertionResponse
-	if err := json.NewDecoder(resp.Body).Decode(&assertionResponse); err != nil {
-		return result, fmt.Errorf("failed to decode JSON: %v", err)
+	reqOptions := requestOptions{method: http.MethodPost, path: postAssertionsURI, body: assertion, ignoreResponseStatus: true}
+	responseStatusCode, err := r(reqOptions, &assertionResponse)
+	if err != nil {
+		log.Fatalf("failed to post assertions: %v", err)
 	}
 
 	result = assertionResult{
 		Title:    assertionResponse.Title,
 		Messages: assertionResponse.Messages,
 	}
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+	if responseStatusCode >= 200 && responseStatusCode <= 299 {
 		result.Success = true
 	}
 
 	return result, nil
 }
 
-func getRequests(url string, pending bool) (requests []apiHTTP.RequestResponse, err error) {
-	req, err := http.NewRequest(http.MethodGet,
-		fmt.Sprintf("%s%s?pending=%v", url, requestsURI, pending), nil)
+func getRequests(r requester, pending bool) (requests []apiHTTP.RequestResponse, err error) {
+	reqOptions := requestOptions{method: http.MethodGet, path: fmt.Sprintf("%s?pending=%v", requestsURI, pending)}
+	_, err = r(reqOptions, &requests)
 	if err != nil {
-		return requests, err
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("X-FakeAPI-Control", "meta")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return requests, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 299 {
-		return requests, fmt.Errorf("unexpected response status while fetching requests")
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&requests); err != nil {
-		return requests, fmt.Errorf("failed to decode JSON: %v", err)
+		log.Fatalf("failed to fetch requests: %v", err)
 	}
 
 	return requests, nil
 }
 
-func deleteRequests(url string) error {
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s%s", url, requestsURI), nil)
+func deleteRequests(r requester) error {
+	reqOptions := requestOptions{method: http.MethodDelete, path: requestsURI}
+	_, err := r(reqOptions, nil)
 	if err != nil {
-		return err
+		log.Fatalf("failed to delete requests: %v", err)
 	}
 
-	req.Header.Set("X-FakeAPI-Control", "meta")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		return nil
-	}
-
-	return fmt.Errorf("unexpected response status while deleting requests")
+	return nil
 }
 
 func headersParsed(headers []string) map[string]string {
@@ -322,4 +303,45 @@ func quietAwarePrintfGenerator(quiet bool) func(s string, args ...any) {
 			fmt.Printf(s, args...)
 		}
 	}
+}
+
+type requestOptions struct {
+	method               string
+	path                 string
+	body                 any
+	ignoreResponseStatus bool
+}
+
+type requester func(r requestOptions, responseBodyTarget any) (statusCode int, err error)
+
+func newRequester(baseURL string, postRequest func(*http.Response) error) requester {
+	return requester(func(r requestOptions, target any) (statusCode int, err error) {
+		d, _ := json.Marshal(r.body)
+		req, err := http.NewRequest(r.method, fmt.Sprintf("%s%s", baseURL, r.path), bytes.NewBuffer(d))
+		if err != nil {
+			return statusCode, err
+		}
+
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("x-fakeapi-control", "meta")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return statusCode, err
+		}
+		defer resp.Body.Close()
+
+		statusCode = resp.StatusCode
+		if !r.ignoreResponseStatus && resp.StatusCode >= 299 {
+			return statusCode, fmt.Errorf("unexpected respose status code")
+		}
+
+		if target != nil {
+			if err := json.NewDecoder(resp.Body).Decode(&target); err != nil {
+				return statusCode, fmt.Errorf("failed to decode JSON: %v", err)
+			}
+		}
+
+		return statusCode, postRequest(resp)
+	})
 }
