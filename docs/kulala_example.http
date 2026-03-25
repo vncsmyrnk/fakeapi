@@ -1,0 +1,13 @@
+### API and mock server example
+
+# More about kulala: https://neovim.getkulala.net/
+
+< {%
+  -- lua
+  package.loaded["fakeapi"] = nil
+  local fakeapi = require("fakeapi")
+  fakeapi.set_endpoint("GET", "/items/\\d+", 200, [[{"id": 124}]])
+%}
+
+GET http://localhost:8080/items/1 HTTP/1.1
+Content-Type: application/json

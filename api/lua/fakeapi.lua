@@ -25,6 +25,16 @@ function M.assert(method, path, opts)
   return os.execute(cmd) == 0
 end
 
+---@param method string
+---@param path string
+---@param status_code integer
+---@param response_json string
+---@return boolean
+function M.set_endpoint(method, path, status_code, response_json)
+  local cmd = string.format([[fakeapi set endpoint %s '%s' -s %s -r '%s']], method, path, status_code, response_json)
+  return os.execute(cmd) == 0
+end
+
 ---@class ClearRequestsOpts
 ---@field port integer
 

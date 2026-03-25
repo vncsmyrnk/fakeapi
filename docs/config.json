@@ -1,6 +1,6 @@
 [
   {
-    "path": "/items/(?P<id>\\d+)",
+    "path": "/items/\\d+",
     "method": "GET",
     "statusCode": 200,
     "response": {
