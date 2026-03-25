@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"fakeapi/internal/domain"
 )
@@ -49,6 +50,13 @@ func NewDomainEndpointFromRequest(er EndpointRequest) domain.Endpoint {
 		c = nil
 	} else {
 		c = &s
+	}
+
+	if er.StatusCode == 0 {
+		er.StatusCode = http.StatusNoContent
+		if c != nil {
+			er.StatusCode = http.StatusOK
+		}
 	}
 
 	return domain.Endpoint{
