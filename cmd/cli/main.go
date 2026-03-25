@@ -137,7 +137,8 @@ func main() {
 		Args:  cobra.RangeArgs(2, 3),
 	}
 	setEndpointStatusCode := cmdSetEndpoint.Flags().IntP("status-code", "s", 0, "Status code for the endpoint response")
-	setEndpointFilePath := cmdSetEndpoint.Flags().StringP("response", "r", "", "File path for the endpoint response")
+	setEndpointFilePathOrContent := cmdSetEndpoint.Flags().StringP(
+		"response", "r", "", "File path or string content for the endpoint response (use @ at the begining of the path to indicate a file)")
 	cmdSet.AddCommand(cmdSetEndpoint)
 
 	cmdSetEndpoint.Run = func(_ *cobra.Command, args []string) {
@@ -147,12 +148,15 @@ func main() {
 			StatusCode: *setEndpointStatusCode,
 		}
 
-		if *setEndpointFilePath != "" {
-			f, err := os.ReadFile(*setEndpointFilePath)
+		filePathOrContent := *setEndpointFilePathOrContent
+		if filePathOrContent != "" && filePathOrContent[0] == '@' {
+			f, err := os.ReadFile(filePathOrContent[1:])
 			if err != nil {
 				log.Fatalf("failed to read the file: %v", err)
 			}
 			e.Response = json.RawMessage(f)
+		} else if filePathOrContent != "" {
+			e.Response = json.RawMessage([]byte(filePathOrContent))
 		}
 
 		err := putEndpoint(r, e)
