@@ -1,0 +1,31 @@
+name: LuaRocks Upload
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/lua/*.rockspec'
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.1"
+
+      - name: Setup LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+
+      - name: Upload Rockspec
+        env:
+          LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
+        run: |
+          luarocks upload api/lua/*.rockspec --api-key=$LUAROCKS_API_KEY
