@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	serverBaseURL      = "http://localhost"
-	postAssertionsPath = "/assertions"
-	requestsPath       = "/requests"
+	serverBaseURL  = "http://localhost"
+	assertionsPath = "/assertions"
+	requestsPath   = "/requests"
+	endpointsPath  = "/endpoints"
 )
 
 var client = &http.Client{
@@ -80,6 +81,7 @@ func main() {
 		Long:  "Lists fake API configuration or recorded data",
 		Args:  cobra.ExactArgs(1),
 	}
+	rootCmd.AddCommand(cmdList)
 
 	cmdListRequests := &cobra.Command{
 		Use:   "requests",
@@ -88,7 +90,6 @@ func main() {
 		Args:  cobra.NoArgs,
 	}
 	cmdList.AddCommand(cmdListRequests)
-	rootCmd.AddCommand(cmdList)
 	pendingRequests := cmdListRequests.Flags().Bool("pending", false, "Pending requests")
 	jsonRequests := cmdListRequests.Flags().Bool("json", false, "Return a JSON response")
 
@@ -119,6 +120,45 @@ func main() {
 			fmt.Fprintf(w, "%s\t%s\t%v\n", r.Method, r.Path, assertionStatus(r))
 		}
 		w.Flush()
+	}
+
+	cmdSet := &cobra.Command{
+		Use:   "set",
+		Short: "Sets fake API configuration data",
+		Long:  "Sets fake API configuration data",
+		Args:  cobra.ExactArgs(1),
+	}
+	rootCmd.AddCommand(cmdSet)
+
+	cmdSetEndpoint := &cobra.Command{
+		Use:   "endpoint <method> <path>",
+		Short: "Creates or updates an endpoint",
+		Long:  "Creates or updates an endpoint",
+		Args:  cobra.RangeArgs(2, 3),
+	}
+	setEndpointStatusCode := cmdSetEndpoint.Flags().IntP("status-code", "s", 0, "Status code for the endpoint response")
+	setEndpointFilePath := cmdSetEndpoint.Flags().StringP("response", "r", "", "File path for the endpoint response")
+	cmdSet.AddCommand(cmdSetEndpoint)
+
+	cmdSetEndpoint.Run = func(_ *cobra.Command, args []string) {
+		e := apiHTTP.EndpointRequest{
+			Method:     args[0],
+			Path:       args[1],
+			StatusCode: *setEndpointStatusCode,
+		}
+
+		if *setEndpointFilePath != "" {
+			f, err := os.ReadFile(*setEndpointFilePath)
+			if err != nil {
+				log.Fatalf("failed to read the file: %v", err)
+			}
+			e.Response = json.RawMessage(f)
+		}
+
+		err := putEndpoint(r, e)
+		if err != nil {
+			log.Fatalf("failed to persist endpoint: %v", err)
+		}
 	}
 
 	cmdAssert := &cobra.Command{
@@ -201,7 +241,7 @@ func requestURL(baseURL string, port int) string {
 
 func postAssertions(r requester, assertion apiHTTP.AssertionRequest) (result assertionResult, err error) {
 	var assertionResponse apiHTTP.AssertionResponse
-	reqOptions := requestOptions{method: http.MethodPost, path: postAssertionsPath, body: assertion, ignoreResponseStatus: true}
+	reqOptions := requestOptions{method: http.MethodPost, path: assertionsPath, body: assertion, ignoreResponseStatus: true}
 	responseStatusCode, err := r(reqOptions, &assertionResponse)
 	if err != nil {
 		log.Fatalf("failed to post assertions: %v", err)
@@ -233,6 +273,16 @@ func deleteRequests(r requester) error {
 	_, err := r(reqOptions, nil)
 	if err != nil {
 		log.Fatalf("failed to delete requests: %v", err)
+	}
+
+	return nil
+}
+
+func putEndpoint(r requester, endpoint apiHTTP.EndpointRequest) error {
+	reqOptions := requestOptions{method: http.MethodPut, path: endpointsPath, body: endpoint}
+	_, err := r(reqOptions, nil)
+	if err != nil {
+		log.Fatalf("failed to put endpoint: %v", err)
 	}
 
 	return nil
