@@ -97,21 +97,20 @@ VALUES (:path, :method, :status_code, :response)
 ON CONFLICT(path, method) DO UPDATE SET
 	status_code = EXCLUDED.status_code,
 	response = EXCLUDED.response,
-	updated_at = CURRENT_TIMESTAMP;
+	updated_at = CURRENT_TIMESTAMP
+RETURNING id;
 `
 
+	var modifiedID int
 	dbEndpoint := toDBEndpoint(e)
-	result, err := r.db.NamedExecContext(ctx, query, dbEndpoint)
+	err := r.db.GetContext(
+		ctx, &modifiedID, query, dbEndpoint.Path, dbEndpoint.Method,
+		dbEndpoint.StatusCode, dbEndpoint.Response)
 	if err != nil {
 		return 0, fmt.Errorf("insert endpoint: %w", err)
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("get last insert id: %w", err)
-	}
-
-	return int(id), nil
+	return modifiedID, nil
 }
 
 func (r *repository) Delete(ctx context.Context, id int) error {
