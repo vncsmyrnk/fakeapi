@@ -76,7 +76,7 @@ Wrappers for `fakeapi` in other languages/tools.
 #### Lua
 
 ```sh
-luarocks install https://raw.githubusercontent.com/vncsmyrnk/fakeapi/main/api/lua/fakeapi.rockspec
+luarocks install https://raw.githubusercontent.com/vncsmyrnk/fakeapi/main/api/lua/fakeapi-0.2.0-1.rockspec
 ```
 
 ## Roadmap and new features
