@@ -122,7 +122,7 @@ func main() {
 	}
 
 	cmdAssert := &cobra.Command{
-		Use:   "assert [method] [PATH]",
+		Use:   "assert [method] [path]",
 		Short: "Assert a request made to the fake API",
 		Long:  "Assert can ensure a request was made to the server using headers and body filters.",
 		Args:  cobra.ArbitraryArgs,
@@ -332,7 +332,7 @@ func newRequester(baseURL string, postRequest func(*http.Response) error) reques
 
 		statusCode = resp.StatusCode
 		if !r.ignoreResponseStatus && resp.StatusCode >= 299 {
-			return statusCode, fmt.Errorf("unexpected respose status code")
+			return statusCode, fmt.Errorf("unexpected response status code")
 		}
 
 		if target != nil {
