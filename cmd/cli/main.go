@@ -170,15 +170,17 @@ func main() {
 	}
 
 	var (
-		headers, attrs []string
+		headers, bodyAttrs, queryStringAttrs []string
 	)
 	cmdAssert.Flags().StringArrayVarP(&headers, "header", "H", []string{}, "Expected headers in 'Key: Value' format")
-	cmdAssert.Flags().StringArrayVarP(&attrs, "body-attributes", "b", []string{}, "Expected body attributes in 'key=value' format")
+	cmdAssert.Flags().StringArrayVarP(&bodyAttrs, "body-attributes", "b", []string{}, "Expected body attributes in 'key=value' format")
+	cmdAssert.Flags().StringArrayVarP(&queryStringAttrs, "query-string", "q", []string{}, "Expected query string attribute in 'key=value' format")
 	requestCount := cmdAssert.Flags().IntP("count", "c", -1, "Match occurrence count")
 
 	cmdAssert.Run = func(cmd *cobra.Command, args []string) {
 		expectedHeaders := headersParsed(headers)
-		expectedBodyAttrs := attributesParsed(attrs)
+		expectedBodyAttrs := attributesParsed(bodyAttrs)
+		expectedQueryStringAttrs := attributesParsed(queryStringAttrs)
 
 		var method, path string
 		if len(args) >= 2 {
@@ -194,11 +196,12 @@ func main() {
 		}
 
 		assertion := apiHTTP.AssertionRequest{
-			Method:  method,
-			Path:    path,
-			Headers: expectedHeaders,
-			Body:    expectedBodyAttrs,
-			Count:   requestCount,
+			Method:       method,
+			Path:         path,
+			Headers:      expectedHeaders,
+			QueryStrings: expectedQueryStringAttrs,
+			Body:         expectedBodyAttrs,
+			Count:        requestCount,
 		}
 
 		result, err := postAssertions(r, assertion)
@@ -374,6 +377,9 @@ func newRequester(baseURL string, postRequest func(*http.Response) error) reques
 			}
 		}
 
-		return statusCode, postRequest(resp)
+		if postRequest != nil {
+			return statusCode, postRequest(resp)
+		}
+		return statusCode, nil
 	})
 }
