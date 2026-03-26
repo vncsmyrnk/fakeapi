@@ -1,12 +1,20 @@
 ---@class FakeApi
 local M = {}
 
+--- This is a wrapper around the fakeapi CLI. This was meant
+--- to be used within the Neovim runtime, specially for `mistweaverco/kulala.nvim`.
+--- The fakeapi CLI must be installed for this wrapper to work properly.
+--- More info at: https://github.com/vncsmyrnk/fakeapi
+
 local defaults = {
   port = 8080,
 }
 
 ---@class AssertOpts
 ---@field count integer
+---@field headers string
+---@field query_strings string
+---@field body string
 ---@field port integer
 
 ---@param method string
@@ -16,9 +24,12 @@ local defaults = {
 function M.assert(method, path, opts)
   opts = opts or {}
   local cmd = string.format(
-    [[fakeapi assert %s %s -c %s -p %s --quiet]],
+    [[fakeapi assert %s %s -H '%s' -q '%s' -b '%s' -c %s -p %s --quiet]],
     method,
     path,
+    opts.headers or "",
+    opts.query_strings or "",
+    opts.body or "",
     opts.count or 1,
     opts.port or defaults.port
   )
