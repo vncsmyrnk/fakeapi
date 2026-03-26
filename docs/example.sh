@@ -32,15 +32,15 @@ test "1" -eq "1"
 echo -e "\nNow lets assert those requests!"
 echo "Asserting the first request comparing method, path, headers and payload body..."
 sleep 2
-fakeassert POST /items -H 'header1:value1' -b 'id=1' # You can match headers and body payload
+fakeapi assert POST /items -H 'header1:value1' -b 'id=1' # You can match headers and body payload
 
 echo -e "\nAsserting the first request comparing method and path..."
 sleep 2
-fakeassert GET /items/1 # You can also omit headers and body and assert multiple requests at once
+fakeapi assert GET /items/1 # You can also omit headers and body and assert multiple requests at once
 
 echo -e "\nAsserting there are no request left..."
 sleep 2
-fakeassert -c 0 # You can assert for no pending assertions left
+fakeapi assert -c 0 # You can assert for no pending assertions left
 
 sleep 1
 echo -e "\nStopping docker container..."
