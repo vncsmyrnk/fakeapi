@@ -13,41 +13,44 @@ import (
 
 // request represents the DB record.
 type request struct {
-	ID              int       `db:"id"`
-	EndpointID      int       `db:"endpoint_id"`
-	Path            string    `db:"path"`
-	Method          string    `db:"method"`
-	AssertionStatus string    `db:"assertion_status"`
-	HitTime         time.Time `db:"hit_time"`
-	UserAgent       *string   `db:"user_agent"`
-	RequestHeaders  *string   `db:"request_headers"`
-	RequestBody     *string   `db:"request_body"`
+	ID                  int       `db:"id"`
+	EndpointID          int       `db:"endpoint_id"`
+	Path                string    `db:"path"`
+	Method              string    `db:"method"`
+	AssertionStatus     string    `db:"assertion_status"`
+	HitTime             time.Time `db:"hit_time"`
+	UserAgent           *string   `db:"user_agent"`
+	RequestHeaders      *string   `db:"request_headers"`
+	RequestQueryStrings *string   `db:"request_query_strings"`
+	RequestBody         *string   `db:"request_body"`
 }
 
 func toDomainRequest(r request) domain.Request {
 	return domain.Request{
-		ID:              r.ID,
-		EndpointID:      r.EndpointID,
-		Path:            r.Path,
-		Method:          r.Method,
-		AssertionStatus: domain.AssertionStatus(r.AssertionStatus),
-		HitTime:         r.HitTime,
-		UserAgent:       r.UserAgent,
-		RequestHeaders:  r.RequestHeaders,
-		RequestBody:     r.RequestBody,
+		ID:                  r.ID,
+		EndpointID:          r.EndpointID,
+		Path:                r.Path,
+		Method:              r.Method,
+		AssertionStatus:     domain.AssertionStatus(r.AssertionStatus),
+		HitTime:             r.HitTime,
+		UserAgent:           r.UserAgent,
+		RequestHeaders:      r.RequestHeaders,
+		RequestQueryStrings: r.RequestQueryStrings,
+		RequestBody:         r.RequestBody,
 	}
 }
 
 func toDBRequest(r domain.Request) request {
 	return request{
-		ID:             r.ID,
-		EndpointID:     r.EndpointID,
-		Path:           r.Path,
-		Method:         r.Method,
-		HitTime:        r.HitTime,
-		UserAgent:      r.UserAgent,
-		RequestHeaders: r.RequestHeaders,
-		RequestBody:    r.RequestBody,
+		ID:                  r.ID,
+		EndpointID:          r.EndpointID,
+		Path:                r.Path,
+		Method:              r.Method,
+		HitTime:             r.HitTime,
+		UserAgent:           r.UserAgent,
+		RequestHeaders:      r.RequestHeaders,
+		RequestQueryStrings: r.RequestQueryStrings,
+		RequestBody:         r.RequestBody,
 	}
 }
 
@@ -67,8 +70,8 @@ func NewRequestRepository(db *sqlx.DB) port.RequestRepository {
 
 func (r *requestRepository) Create(ctx context.Context, req domain.Request) (int, error) {
 	query := `
-INSERT INTO requests (endpoint_id, path, hit_time, user_agent, request_headers, request_body)
-VALUES (:endpoint_id, :path, :hit_time, :user_agent, :request_headers, :request_body)
+INSERT INTO requests (endpoint_id, path, hit_time, user_agent, request_headers, request_query_strings, request_body)
+VALUES (:endpoint_id, :path, :hit_time, :user_agent, :request_headers, :request_query_strings, :request_body)
 `
 
 	dbReq := toDBRequest(req)
@@ -90,7 +93,8 @@ func (r *requestRepository) FetchAll(ctx context.Context) ([]domain.Request, err
 SELECT
   r.id, r.endpoint_id, r.path, e.method,
   IFNULL(a.status, 'pending') assertion_status,
-  r.hit_time, r.user_agent, r.request_headers, r.request_body 
+  r.hit_time, r.user_agent, r.request_headers,
+	r.request_query_strings, r.request_body
 FROM requests r
 JOIN endpoints e ON r.endpoint_id = e.id
 LEFT JOIN assertions a on a.request_id = r.id
@@ -114,7 +118,8 @@ func (r *requestRepository) FetchPendingByMethodAndPath(ctx context.Context, met
 	query := `
 SELECT
   r.id, r.endpoint_id, r.path, e.method, 'pending' assertion_status,
-  r.hit_time, r.user_agent, r.request_headers, r.request_body
+  r.hit_time, r.user_agent, r.request_headers, r.request_query_strings,
+	r.request_body
 FROM requests r
 JOIN endpoints e ON r.endpoint_id = e.id
 	AND e.method = ?
@@ -145,7 +150,8 @@ func (r *requestRepository) FetchPending(ctx context.Context) ([]domain.Request,
 	query := `
 SELECT
   r.id, r.endpoint_id, r.path, e.method, 'pending' assertion_status,
-  r.hit_time, r.user_agent, r.request_headers, r.request_body
+  r.hit_time, r.user_agent, r.request_headers, r.request_query_strings,
+	r.request_body
 FROM requests r
 JOIN endpoints e ON r.endpoint_id = e.id
 WHERE NOT EXISTS (

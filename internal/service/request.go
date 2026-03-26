@@ -34,12 +34,13 @@ func (s *requestService) Create(ctx context.Context, endpointID int, r *http.Req
 	}
 
 	req := domain.Request{
-		EndpointID:     endpointID,
-		Path:           r.URL.Path,
-		HitTime:        time.Now(),
-		UserAgent:      userAgent,
-		RequestHeaders: s.jsonStringHeaders(r),
-		RequestBody:    s.jsonStringBody(r),
+		EndpointID:          endpointID,
+		Path:                r.URL.Path,
+		HitTime:             time.Now(),
+		UserAgent:           userAgent,
+		RequestHeaders:      s.jsonStringHeaders(r),
+		RequestQueryStrings: s.jsonStringQueryStrings(r),
+		RequestBody:         s.jsonStringBody(r),
 	}
 
 	_, err := s.repo.Create(ctx, req)
@@ -75,11 +76,31 @@ func (s *requestService) jsonStringHeaders(r *http.Request) *string {
 		}
 		headersJSON, err := json.Marshal(flatHeaders)
 		if err == nil {
-			h := string(headersJSON)
-			headers = &h
+			headers = new(string(headersJSON))
 		}
 	}
 	return headers
+}
+
+func (s *requestService) jsonStringQueryStrings(r *http.Request) *string {
+	var queryStrings *string
+	values := r.URL.Query()
+
+	if len(values) > 0 {
+		flatHeaders := make(map[string]any, len(values))
+		for k, v := range values {
+			if len(v) > 1 {
+				flatHeaders[k] = v
+				continue
+			}
+			flatHeaders[k] = values.Get(k)
+		}
+		queryStringsJSON, err := json.Marshal(flatHeaders)
+		if err == nil {
+			queryStrings = new(string(queryStringsJSON))
+		}
+	}
+	return queryStrings
 }
 
 func (s *requestService) jsonStringBody(r *http.Request) *string {

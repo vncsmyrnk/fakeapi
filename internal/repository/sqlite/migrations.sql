@@ -19,10 +19,12 @@ CREATE TABLE IF NOT EXISTS requests (
     hit_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     user_agent TEXT,
     request_headers TEXT,
+    request_query_strings TEXT,
     request_body TEXT,
 
     FOREIGN KEY (endpoint_id) REFERENCES endpoints(id) ON DELETE CASCADE,
     CHECK (request_headers IS NULL OR json_valid(request_headers))
+    CHECK (request_query_strings IS NULL OR json_valid(request_query_strings))
     CHECK (request_body IS NULL OR json_valid(request_body))
 );
 

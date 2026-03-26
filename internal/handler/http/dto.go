@@ -68,43 +68,42 @@ func NewDomainEndpointFromRequest(er EndpointRequest) domain.Endpoint {
 }
 
 type RequestResponse struct {
-	ID              int     `json:"id"`
-	EndpointID      int     `json:"endpointId"`
-	AssertionStatus string  `json:"assertion_status"`
-	Path            string  `json:"path"`
-	Method          string  `json:"method"`
-	HitTime         string  `json:"hitTime"`
-	UserAgent       *string `json:"userAgent,omitempty"`
-	RequestHeaders  any     `json:"requestHeaders,omitempty"`
-	RequestBody     any     `json:"requestBody,omitempty"`
+	ID                  int     `json:"id"`
+	EndpointID          int     `json:"endpointId"`
+	AssertionStatus     string  `json:"assertion_status"`
+	Path                string  `json:"path"`
+	Method              string  `json:"method"`
+	HitTime             string  `json:"hitTime"`
+	UserAgent           *string `json:"userAgent,omitempty"`
+	RequestHeaders      any     `json:"requestHeaders,omitempty"`
+	RequestQueryStrings any     `json:"requestQueryStrings,omitempty"`
+	RequestBody         any     `json:"requestBody,omitempty"`
 }
 
 func newRequestResponse(r domain.Request) RequestResponse {
-	var headers any
-	if r.RequestHeaders != nil {
-		_ = json.Unmarshal([]byte(*r.RequestHeaders), &headers)
+	return RequestResponse{
+		ID:                  r.ID,
+		EndpointID:          r.EndpointID,
+		AssertionStatus:     string(r.AssertionStatus),
+		Path:                r.Path,
+		Method:              r.Method,
+		HitTime:             r.HitTime.Format("2006-01-02T15:04:05Z07:00"),
+		UserAgent:           r.UserAgent,
+		RequestHeaders:      unmarshalJSONResponse(r.RequestHeaders),
+		RequestQueryStrings: unmarshalJSONResponse(r.RequestQueryStrings),
+		RequestBody:         unmarshalJSONResponse(r.RequestBody),
 	}
+}
 
-	var body any
-	if r.RequestBody != nil {
-		err := json.Unmarshal([]byte(*r.RequestBody), &body)
+func unmarshalJSONResponse(s *string) any {
+	var target any
+	if s != nil {
+		err := json.Unmarshal([]byte(*s), &target)
 		if err != nil {
-			// If not a JSON string, just return it as a string
-			body = *r.RequestBody
+			target = *s
 		}
 	}
-
-	return RequestResponse{
-		ID:              r.ID,
-		EndpointID:      r.EndpointID,
-		AssertionStatus: string(r.AssertionStatus),
-		Path:            r.Path,
-		Method:          r.Method,
-		HitTime:         r.HitTime.Format("2006-01-02T15:04:05Z07:00"),
-		UserAgent:       r.UserAgent,
-		RequestHeaders:  headers,
-		RequestBody:     body,
-	}
+	return target
 }
 
 type AssertionRequest struct {
