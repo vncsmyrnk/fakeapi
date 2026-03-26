@@ -1,8 +1,8 @@
 [![CI workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml)
 [![Release workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml)
-[![CLI version](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fvncsmyrnk%2Ffakeapi%2Frefs%2Fheads%2Fmain%2Fcmd%2Fcli%2FVERSION&search=.*&label=CLI%20version)](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fvncsmyrnk%2Ffakeapi%2Frefs%2Fheads%2Fmain%2Fcmd%2Fcli%2FVERSION&search=.*&label=CLI%20version)
-[![Docker image version](https://img.shields.io/docker/v/vncsmyrnk/fakeapi)](https://img.shields.io/docker/v/vncsmyrnk/fakeapi)
-[![LuaRocks version](https://img.shields.io/luarocks/v/vncsmyrnk/fakeapi)](https://img.shields.io/luarocks/v/vncsmyrnk/fakeapi)
+[![CLI version](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fvncsmyrnk%2Ffakeapi%2Frefs%2Fheads%2Fmain%2Fcmd%2Fcli%2FVERSION&search=.*&label=CLI%20version)](https://github.com/vncsmyrnk/fakeapi/blob/main/flake.nix)
+[![Docker image version](https://img.shields.io/docker/v/vncsmyrnk/fakeapi)](https://hub.docker.com/r/vncsmyrnk/fakeapi/tags)
+[![LuaRocks version](https://img.shields.io/luarocks/v/vncsmyrnk/fakeapi)](https://luarocks.org/modules/vncsmyrnk/fakeapi)
 <br>
 [![contributions](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/vncsmyrnk/fakeapi/issues)
 [![Issue count](https://img.shields.io/github/issues-search?query=repo%3Avncsmyrnk%2Ffakeapi%20is%3Aopen&label=open%20issues)](https://github.com/vncsmyrnk/fakeapi/issues)
