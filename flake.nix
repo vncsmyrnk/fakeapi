@@ -25,7 +25,7 @@
           || (baseName == "go.sum");
       };
 
-      serverVersion = "0.7.0";
+      serverVersion = "0.8.0";
       server = pkgs.buildGoModule {
         name = "fakeapi-server";
         src = src;
