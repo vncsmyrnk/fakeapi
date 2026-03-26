@@ -105,18 +105,17 @@ func (s *assertionService) assert(
 	for _, r := range requests {
 		allRequestIDs = append(allRequestIDs, r.ID)
 
-		failedHeaderAssertions :=
-			s.assertHeaders(r.RequestHeaders, assertion.Headers)
+		failedAssertionsMessagesForRequest := make([]string, 0,
+			cap(failedAssertionsMessages)/2)
 
-		failedBodyAssertions :=
-			s.assertPayload(r.RequestBody, assertion.Body)
+		failedAssertionsMessagesForRequest = append(failedAssertionsMessagesForRequest,
+			s.assertHeaders(r.RequestHeaders, assertion.Headers)...)
+		failedAssertionsMessagesForRequest = append(failedAssertionsMessagesForRequest,
+			s.assertQueryStrings(r.RequestQueryStrings, assertion.QueryStrings)...)
+		failedAssertionsMessagesForRequest = append(failedAssertionsMessagesForRequest,
+			s.assertPayload(r.RequestBody, assertion.Body)...)
 
-		failedAssertionsMessages = append(failedAssertionsMessages,
-			failedBodyAssertions...)
-		failedAssertionsMessages = append(failedAssertionsMessages,
-			failedHeaderAssertions...)
-
-		if len(failedBodyAssertions) == 0 && len(failedHeaderAssertions) == 0 {
+		if len(failedAssertionsMessagesForRequest) == 0 {
 			matchedRequestIDs = append(matchedRequestIDs, r.ID)
 		}
 	}
@@ -220,6 +219,42 @@ func (s *assertionService) assertHeaders(jsonHeaders *string, expectedHeaders ma
 		if actualVal != v {
 			failures = append(failures,
 				fmt.Sprintf("Mismatch for header '%s': expected '%s', got '%s'", k, v, actualVal))
+		}
+	}
+
+	return failures
+}
+
+func (s *assertionService) assertQueryStrings(
+	jsonQueryStrings *string, expectedQueryStrings map[string]string,
+) (failures []string) {
+	if len(expectedQueryStrings) == 0 {
+		return failures
+	}
+
+	if jsonQueryStrings == nil || *jsonQueryStrings == "" {
+		if len(expectedQueryStrings) > 0 {
+			failures = append(failures, "Recorded request has no query strings")
+		}
+		return failures
+	}
+
+	queryStrings := *jsonQueryStrings
+	if !gjson.Valid(queryStrings) {
+		return append(failures, "Query string from database are not valid JSON")
+	}
+
+	for p, v := range expectedQueryStrings {
+		result := gjson.Get(queryStrings, p)
+
+		if !result.Exists() {
+			failures = append(failures, fmt.Sprintf("Attribute '%s' not found in query strings", p))
+			continue
+		}
+
+		actualVal := result.String()
+		if actualVal != v {
+			failures = append(failures, fmt.Sprintf("Mismatch for '%s': expected '%s', got '%s'", p, v, actualVal))
 		}
 	}
 

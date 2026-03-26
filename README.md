@@ -51,6 +51,8 @@ fakeapi assert --port 8080 POST /my-route
 # Exit code 1: no matching request was found
 ```
 
+You can also filter for body attributes, headers and query strings using [GJSON Path Syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md).
+
 ## Install
 
 ### Server

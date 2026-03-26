@@ -107,11 +107,12 @@ func unmarshalJSONResponse(s *string) any {
 }
 
 type AssertionRequest struct {
-	Path    string            `json:"path"`
-	Method  string            `json:"method"`
-	Count   *int              `json:"count"`
-	Body    map[string]string `json:"body"`
-	Headers map[string]string `json:"headers"`
+	Path         string            `json:"path"`
+	Method       string            `json:"method"`
+	Count        *int              `json:"count"`
+	Headers      map[string]string `json:"headers"`
+	QueryStrings map[string]string `json:"queryStrings"`
+	Body         map[string]string `json:"body"`
 }
 
 func newDomainAssertionFromAssertionRequest(ar AssertionRequest) (assertion domain.Assertion, err error) {
@@ -124,11 +125,12 @@ func newDomainAssertionFromAssertionRequest(ar AssertionRequest) (assertion doma
 		count = *ar.Count
 	}
 	return domain.Assertion{
-		Method:  ar.Method,
-		Path:    ar.Path,
-		Body:    ar.Body,
-		Headers: ar.Headers,
-		Count:   count,
+		Method:       ar.Method,
+		Path:         ar.Path,
+		Headers:      ar.Headers,
+		QueryStrings: ar.QueryStrings,
+		Body:         ar.Body,
+		Count:        count,
 	}, nil
 }
 

@@ -3,11 +3,12 @@ package domain
 import "fmt"
 
 type Assertion struct {
-	Path    string
-	Method  string
-	Count   int
-	Body    map[string]string
-	Headers map[string]string
+	Path         string
+	Method       string
+	Count        int
+	Headers      map[string]string
+	QueryStrings map[string]string
+	Body         map[string]string
 }
 
 func (a *Assertion) Empty() bool {
