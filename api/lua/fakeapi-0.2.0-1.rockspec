@@ -1,7 +1,7 @@
 package = "fakeapi"
 version = "0.3.0-1"
 source = {
-  url = "git+ssh://git@github.com/vncsmyrnk/fakeapi.git",
+  url = "git://github.com/vncsmyrnk/fakeapi.git",
 }
 description = {
   homepage = "https://github.com/vncsmyrnk/fakeapi",
