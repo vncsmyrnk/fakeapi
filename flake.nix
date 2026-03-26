@@ -22,10 +22,11 @@
           || (pkgs.lib.hasSuffix ".go" baseName)
           || (pkgs.lib.hasSuffix ".sql" baseName)
           || (baseName == "go.mod")
-          || (baseName == "go.sum");
+          || (baseName == "go.sum")
+          || (baseName == "VERSION");
       };
 
-      serverVersion = "0.8.0";
+      serverVersion = pkgs.lib.strings.trim (builtins.readFile ./cmd/server/VERSION);
       server = pkgs.buildGoModule {
         name = "fakeapi-server";
         src = src;
@@ -55,7 +56,7 @@
         '';
       };
 
-      cliVersion = "0.16.0";
+      cliVersion = pkgs.lib.strings.trim (builtins.readFile ./cmd/cli/VERSION);
       cli = pkgs.buildGoModule {
         name = "fakeapi-cli";
         src = src;
