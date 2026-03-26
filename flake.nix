@@ -31,7 +31,7 @@
         name = "fakeapi-server";
         src = src;
         version = serverVersion;
-        vendorHash = "sha256-AlqdP/mLTfify9Ly+lAOo/a4X+jsCaZddvpZsE9l0/0=";
+        vendorHash = "sha256-0RTh822yhYmARGuDIRneLcs3TTE+rmxs978krqvfvuA=";
         doCheck = false;
 
         subPackages = [
@@ -61,7 +61,7 @@
         name = "fakeapi-cli";
         src = src;
         version = cliVersion;
-        vendorHash = "sha256-AlqdP/mLTfify9Ly+lAOo/a4X+jsCaZddvpZsE9l0/0=";
+        vendorHash = "sha256-0RTh822yhYmARGuDIRneLcs3TTE+rmxs978krqvfvuA=";
         doCheck = false;
 
         subPackages = [
