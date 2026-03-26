@@ -7,6 +7,8 @@ on:
     paths:
       - 'api/lua/*.rockspec'
 
+  workflow_dispatch:
+
 jobs:
   upload:
     runs-on: ubuntu-latest
