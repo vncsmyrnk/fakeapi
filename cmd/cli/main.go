@@ -44,7 +44,7 @@ func main() {
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
 
 	port := rootCmd.PersistentFlags().IntP("port", "p", 8080, "Port the target server is running on")
-	quiet := rootCmd.PersistentFlags().BoolP("quiet", "q", false, "Quiet mode")
+	quiet := rootCmd.PersistentFlags().Bool("quiet", false, "Quiet mode")
 
 	cmdClear := &cobra.Command{
 		Use:   "clear",
