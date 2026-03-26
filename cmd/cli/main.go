@@ -10,7 +10,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
@@ -30,8 +29,6 @@ const (
 var client = &http.Client{
 	Timeout: 10 * time.Second,
 }
-
-var serverVersionConstraint, _ = semver.NewConstraint("~0.8")
 
 type assertionResult struct {
 	Success  bool
@@ -66,7 +63,7 @@ func main() {
 	rootCmd.AddCommand(cmdClear)
 
 	url := requestURL(serverBaseURL, *port)
-	r := newRequester(url, serverResponseVersionCheck)
+	r := newRequester(url, nil)
 
 	cmdClearRequests.Run = func(_ *cobra.Command, _ []string) {
 		err := deleteRequests(r)
@@ -219,24 +216,6 @@ func main() {
 	rootCmd.AddCommand(cmdAssert)
 
 	_ = rootCmd.Execute()
-}
-
-func serverResponseVersionCheck(r *http.Response) error {
-	v := r.Header.Get("x-fakeapi-version")
-	if v == "dev" {
-		return nil
-	}
-	serverVersion, err := semver.NewVersion(v)
-	if err != nil {
-		return err
-	}
-
-	if constraintOK := serverVersionConstraint.Check(serverVersion); !constraintOK {
-		return fmt.Errorf(
-			"server version not compatible with the current CLI. The current CLI supports the following server versions: %s",
-			serverVersionConstraint.String())
-	}
-	return nil
 }
 
 func requestURL(baseURL string, port int) string {
