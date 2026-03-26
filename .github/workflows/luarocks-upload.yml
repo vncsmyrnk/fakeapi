@@ -30,4 +30,5 @@ jobs:
         env:
           LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
         run: |
+          luarocks install dkjson --local --lua-version=5.1
           luarocks upload api/lua/*.rockspec --api-key=$LUAROCKS_API_KEY
