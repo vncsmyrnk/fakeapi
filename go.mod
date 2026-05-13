@@ -11,7 +11,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/tidwall/gjson v1.18.0
-	golang.org/x/text v0.22.0
+	golang.org/x/text v0.37.0
 )
 
 require (
