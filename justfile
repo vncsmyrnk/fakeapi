@@ -22,7 +22,11 @@ build-server:
 
 build-cli:
   @mkdir -p dist
-  go build -o dist/fakeapi ./cmd/cli/main.go
+  go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -o ./dist/fakeapi \
+    ./cmd/cli/main.go
 
 docker-build:
   nix build .#docker
