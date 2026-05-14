@@ -79,7 +79,7 @@ jobs:
   cd-check:
     needs: [ci-go, ci-nix, ci-lua, ci-pkgbuild]
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip-cd]') }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     outputs:
       server-version-changed: ${{ steps.filter.outputs.server-version-changed }}
       cli-version-changed: ${{ steps.filter.outputs.cli-version-changed }}
