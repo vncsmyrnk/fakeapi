@@ -29,7 +29,7 @@ jobs:
       - name: Builds all packages
         run: nix build .#all
 
-  docker-build:
+  cd-dockerhub:
     name: Builds Docker image
     needs: ci
     runs-on: ubuntu-latest
