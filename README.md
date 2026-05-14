@@ -76,6 +76,10 @@ nix profile add github:vncsmyrnk/fakeapi
 ```
 
 ```sh
+yay -S fakeapi-git
+```
+
+```sh
 echo "deb [trusted=yes] https://apt.fury.io/vncsmyrnk /" | sudo tee /etc/apt/sources.list.d/vncsmyrnk.list
 sudo apt update && sudo apt install fakeapi
 ```

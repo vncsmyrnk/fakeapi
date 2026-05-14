@@ -41,6 +41,17 @@ jobs:
       - name: Build flake
         run: nix build
 
+  ci-pkgbuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Arch Package
+        uses: edlanglois/pkgbuild-action@v1
+        with:
+          namcap: true
+
   ci-lua:
     runs-on: ubuntu-latest
     steps:
@@ -66,15 +77,21 @@ jobs:
           args: --check .
 
   cd-check:
-    needs: [ci-go, ci-nix, ci-lua]
+    needs: [ci-go, ci-nix, ci-lua, ci-pkgbuild]
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip-cd]') }}
+    outputs:
+      server-version-changed: ${{ steps.filter.outputs.server-version-changed }}
+      cli-version-changed: ${{ steps.filter.outputs.cli-version-changed }}
+      lua-rockspec-changed: ${{ steps.filter.outputs.lua-rockspec-changed }}
+      pkgbuild-changed: ${{ steps.filter.outputs.pkgbuild-changed }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Check for server version change
         uses: dorny/paths-filter@v4
+        id: filter
         with:
           filters: |
             server-version-changed:
@@ -83,6 +100,8 @@ jobs:
               - 'cmd/cli/VERSION'
             lua-rockspec-changed:
               - 'api/lua/**/*.rockspec'
+            pkgbuild-changed:
+              - 'PKGBUILD'
 
   cd-dockerhub:
     needs: cd-check
@@ -176,6 +195,25 @@ jobs:
         run: |
           DEB_FILE=$(find . -name '*.deb' -type f | head -n 1)
           curl -F package=@$DEB_FILE https://${{ secrets.GEMFURY_PUSH_TOKEN }}@push.fury.io/vncsmyrnk
+
+  cd-pkgbuild:
+    needs: cd-check
+    if: ${{ needs.cd-check.outputs.pkgbuild-changed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish AUR package
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.3
+        with:
+          pkgname: fakeapi-git
+          pkgbuild: ./PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update AUR package"
+          ssh_keyscan_types: rsa,ecdsa,ed25519
 
   cd-luarocks:
     runs-on: ubuntu-latest
