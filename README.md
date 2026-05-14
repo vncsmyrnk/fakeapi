@@ -1,5 +1,4 @@
-[![CI workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci.yml)
-[![Release workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/release.yml)
+[![CI/CD workflow](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/vncsmyrnk/fakeapi/actions/workflows/ci-cd.yml)
 [![contributions](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/vncsmyrnk/fakeapi/issues)
 [![Issue count](https://img.shields.io/github/issues-search?query=repo%3Avncsmyrnk%2Ffakeapi%20is%3Aopen&label=open%20issues)](https://github.com/vncsmyrnk/fakeapi/issues)
 <br>
@@ -74,6 +73,11 @@ docker run --rm -it -p 8080:8080 vncsmyrnk/fakeapi
 
 ```sh
 nix profile add github:vncsmyrnk/fakeapi
+```
+
+```sh
+echo "deb [trusted=yes] https://apt.fury.io/vncsmyrnk /" | sudo tee /etc/apt/sources.list.d/vncsmyrnk.list
+sudo apt update && sudo apt install fakeapi
 ```
 
 ### APIs

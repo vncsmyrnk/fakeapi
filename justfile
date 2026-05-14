@@ -18,7 +18,11 @@ generate:
 
 build-server:
   @mkdir -p dist
-  go build -o dist/fakeapi ./cmd/server/main.go
+  go build -o dist/fakeapi-server ./cmd/server/main.go
+
+build-cli:
+  @mkdir -p dist
+  go build -o dist/fakeapi ./cmd/cli/main.go
 
 docker-build:
   nix build .#docker
